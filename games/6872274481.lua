@@ -4916,6 +4916,21 @@ run(function()
 		return false
 	end
 	
+	local function isBlockSupported(pos)
+		-- Check if there is a block directly below
+		local belowPos = pos - Vector3.new(0, 3, 0)
+		if getPlacedBlock(belowPos) then
+			return true
+		end
+		-- Check if there is an adjacent block
+		for _, v in adjacent do
+			if getPlacedBlock(pos + v) then
+				return true
+			end
+		end
+		return false
+	end
+	
 	local function getScaffoldBlock()
 		if store.hand.toolType == 'block' then
 			return store.hand.tool.Name, store.hand.amount
@@ -4979,12 +4994,8 @@ run(function()
 								local block, blockpos = getPlacedBlock(currentpos)
 								if not block then
 									blockpos = checkAdjacent(blockpos * 3) and blockpos * 3 or blockProximity(currentpos)
-									if blockpos then
-										-- Ensure the block is not floating diagonally
-										local belowPos = blockpos - Vector3.new(0, 3, 0)
-										if getPlacedBlock(belowPos) or checkAdjacent(belowPos) then
-											task.spawn(bedwars.placeBlock, blockpos, wool, false)
-										end
+									if blockpos and isBlockSupported(blockpos) then
+										task.spawn(bedwars.placeBlock, blockpos, wool, false)
 									end
 								end
 								lastpos = currentpos
