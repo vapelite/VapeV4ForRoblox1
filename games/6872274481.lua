@@ -4916,20 +4916,6 @@ run(function()
 		return false
 	end
 	
-	local function hasSupport(pos)
-		-- Check for block directly below
-		if getPlacedBlock(pos + Vector3.new(0, -3, 0)) then
-			return true
-		end
-		-- Check adjacent blocks
-		for _, dir in adjacent do
-			if getPlacedBlock(pos + dir) then
-				return true
-			end
-		end
-		return false
-	end
-	
 	local function getScaffoldBlock()
 		if store.hand.toolType == 'block' then
 			return store.hand.tool.Name, store.hand.amount
@@ -4976,9 +4962,7 @@ run(function()
 						if wool then
 							local root = entitylib.character.RootPart
 							if Tower.Enabled and inputService:IsKeyDown(Enum.KeyCode.Space) and (not inputService:GetFocusedTextBox()) then
-								root.Velocity = Vector3.new(0, 35, 0)
-							else
-								root.Velocity = Vector3.new(root.Velocity.X, root.Velocity.Y, root.Velocity.Z)
+								root.Velocity = Vector3.new(root.Velocity.X, 38, root.Velocity.Z)
 							end
 	
 							for i = Expand.Value, 1, -1 do
@@ -4994,10 +4978,13 @@ run(function()
 	
 								local block, blockpos = getPlacedBlock(currentpos)
 								if not block then
-									blockpos = blockProximity(currentpos)
-									-- Only place block if it has support or is part of tower mode
-									if blockpos and (hasSupport(blockpos) or (Tower.Enabled and inputService:IsKeyDown(Enum.KeyCode.Space)) then
-										task.spawn(bedwars.placeBlock, blockpos, wool, false)
+									blockpos = checkAdjacent(blockpos * 3) and blockpos * 3 or blockProximity(currentpos)
+									if blockpos then
+										-- Ensure the block is not floating diagonally
+										local belowPos = blockpos - Vector3.new(0, 3, 0)
+										if getPlacedBlock(belowPos) or checkAdjacent(belowPos) then
+											task.spawn(bedwars.placeBlock, blockpos, wool, false)
+										end
 									end
 								end
 								lastpos = currentpos
@@ -5005,7 +4992,7 @@ run(function()
 						end
 					end
 	
-					task.wait(0.001)
+					task.wait(0.03)
 				until not Scaffold.Enabled
 			else
 				Label = nil
