@@ -4916,20 +4916,6 @@ run(function()
 		return false
 	end
 	
-	local function hasSupport(pos)
-		-- Check for block directly below
-		if getPlacedBlock(pos + Vector3.new(0, -3, 0)) then
-			return true
-		end
-		-- Check adjacent blocks
-		for _, dir in adjacent do
-			if getPlacedBlock(pos + dir) then
-				return true
-			end
-		end
-		return false
-	end
-	
 	local function getScaffoldBlock()
 		if store.hand.toolType == 'block' then
 			return store.hand.tool.Name, store.hand.amount
@@ -4976,8 +4962,10 @@ run(function()
 						if wool then
 							local root = entitylib.character.RootPart
 							if Tower.Enabled and inputService:IsKeyDown(Enum.KeyCode.Space) and (not inputService:GetFocusedTextBox()) then
-								root.Velocity = Vector3.new(0, 35, 0)
+								-- Freeze horizontal movement (stop motion)
+								root.Velocity = Vector3.new(0, 35, 0)  -- Set X and Z velocity to 0, keep Y velocity for upward movement
 							else
+								-- Restore normal movement when not tower-building
 								root.Velocity = Vector3.new(root.Velocity.X, root.Velocity.Y, root.Velocity.Z)
 							end
 	
@@ -4994,9 +4982,8 @@ run(function()
 	
 								local block, blockpos = getPlacedBlock(currentpos)
 								if not block then
-									blockpos = blockProximity(currentpos)
-									-- Only place block if it has support or is part of tower mode
-									if blockpos and (hasSupport(blockpos) or (Tower.Enabled and inputService:IsKeyDown(Enum.KeyCode.Space)) then
+									blockpos = checkAdjacent(blockpos * 3) and blockpos * 3 or blockProximity(currentpos)
+									if blockpos then
 										task.spawn(bedwars.placeBlock, blockpos, wool, false)
 									end
 								end
