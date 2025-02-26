@@ -4874,7 +4874,16 @@ run(function()
 	local LimitItem
 	local Mouse
 	local adjacent, lastpos, label = {}, Vector3.zero
-	local towerActivated = false  -- Track tower activation
+	local towerActivated = false
+
+	-- Added support check directions including downward
+	local supportDirections = {
+		Vector3.new(0, -3, 0),  -- Directly below
+		Vector3.new(3, 0, 0),
+		Vector3.new(-3, 0, 0),
+		Vector3.new(0, 0, 3),
+		Vector3.new(0, 0, -3)
+	}
 
 	for x = -3, 3, 3 do
 		for y = -3, 3, 3 do
@@ -4885,6 +4894,20 @@ run(function()
 				end
 			end
 		end
+	end
+
+	local function hasSupport(pos)
+		-- Check for block directly below
+		if getPlacedBlock(pos + Vector3.new(0, -3, 0)) then
+			return true
+		end
+		-- Check adjacent blocks
+		for _, dir in supportDirections do
+			if getPlacedBlock(pos + dir) then
+				return true
+			end
+		end
+		return false
 	end
 
 	local function nearCorner(poscheck, pos)
@@ -4906,15 +4929,6 @@ run(function()
 		end
 		table.clear(tab)
 		return returned
-	end
-
-	local function checkAdjacent(pos)
-		for _, v in adjacent do
-			if getPlacedBlock(pos + v) then
-				return true
-			end
-		end
-		return false
 	end
 
 	local function getScaffoldBlock()
@@ -4965,15 +4979,12 @@ run(function()
 							local isTower = Tower.Enabled and inputService:IsKeyDown(Enum.KeyCode.Space) and (not inputService:GetFocusedTextBox())
 							
 							if isTower then
-								root.Velocity = Vector3.new(0, 35, 0)  -- Set vertical velocity
-
+								root.Velocity = Vector3.new(0, 35, 0)
 								if not towerActivated then
-									-- Place initial block and block below when tower starts
 									local currentpos = roundPos(root.Position - Vector3.new(0, entitylib.character.HipHeight + (Downwards.Enabled and inputService:IsKeyDown(Enum.KeyCode.LeftShift) and 4.5 or 1.5), 0))
 									local block, blockpos = getPlacedBlock(currentpos)
 									if not block then
 										task.spawn(bedwars.placeBlock, blockpos, wool, false)
-										-- Place block below if space available
 										local belowPos = blockpos - Vector3.new(0, 3, 0)
 										local blockBelow, _ = getPlacedBlock(belowPos)
 										if not blockBelow then
@@ -4984,7 +4995,7 @@ run(function()
 								end
 							else
 								root.Velocity = Vector3.new(root.Velocity.X, root.Velocity.Y, root.Velocity.Z)
-								towerActivated = false  -- Reset on release
+								towerActivated = false
 							end
 	
 							for i = Expand.Value, 1, -1 do
@@ -5000,8 +5011,9 @@ run(function()
 	
 								local block, blockpos = getPlacedBlock(currentpos)
 								if not block then
-									blockpos = checkAdjacent(blockpos * 3) and blockpos * 3 or blockProximity(currentpos)
-									if blockpos then
+									blockpos = blockProximity(currentpos)
+									-- Only place block if it has support and is adjacent to existing blocks
+									if blockpos and (hasSupport(blockpos) or (isTower and i == Expand.Value)) then
 										task.spawn(bedwars.placeBlock, blockpos, wool, false)
 									end
 								end
@@ -5014,7 +5026,7 @@ run(function()
 				until not Scaffold.Enabled
 			else
 				Label = nil
-				towerActivated = false  -- Reset on disable
+				towerActivated = false
 			end
 		end,
 		Tooltip = 'Helps you make bridges/scaffold walk.'
