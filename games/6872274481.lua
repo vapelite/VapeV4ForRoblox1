@@ -1178,6 +1178,22 @@ run(function()
 	local SingleMode
 	local lockedTarget = nil
 
+	-- Helper function to acquire a target.
+	local function getTarget()
+		if KillauraTarget.Enabled then
+			return store.KillauraTarget
+		else
+			return entitylib.EntityPosition({
+				Range = Distance.Value,
+				Part = 'RootPart',
+				Wallcheck = Targets.Walls.Enabled,
+				Players = Targets.Players.Enabled,
+				NPCs = Targets.NPCs.Enabled,
+				Sort = sortmethods[Sort.Value]
+			})
+		end
+	end
+
 	AimAssist = vape.Categories.Combat:CreateModule({
 		Name = 'AimAssist',
 		Function = function(callback)
@@ -1186,53 +1202,25 @@ run(function()
 					-- Keep the sword check and swing timing intact.
 					if entitylib.isAlive and store.hand.toolType == 'sword' and ((not ClickAim.Enabled) or (tick() - bedwars.SwordController.lastSwing) < 0.4) then
 						local ent = nil
-						
-						-- If Single Mode is enabled, check if we already have a valid locked target.
+						-- Use locked target if Single Mode is enabled.
 						if SingleMode.Enabled then
 							if lockedTarget and lockedTarget.Parent then
 								ent = lockedTarget
 							else
-								-- Lock onto a new target if none exists.
-								if KillauraTarget.Enabled then
-									lockedTarget = store.KillauraTarget
-								else
-									lockedTarget = entitylib.EntityPosition({
-										Range = Distance.Value,
-										Part = 'RootPart',
-										Wallcheck = Targets.Walls.Enabled,
-										Players = Targets.Players.Enabled,
-										NPCs = Targets.NPCs.Enabled,
-										Sort = sortmethods[Sort.Value]
-									})
-								end
+								lockedTarget = getTarget()
 								ent = lockedTarget
 							end
 						else
-							-- Normal mode: update the target every frame.
-							if KillauraTarget.Enabled then
-								ent = store.KillauraTarget
-							else
-								ent = entitylib.EntityPosition({
-									Range = Distance.Value,
-									Part = 'RootPart',
-									Wallcheck = Targets.Walls.Enabled,
-									Players = Targets.Players.Enabled,
-									NPCs = Targets.NPCs.Enabled,
-									Sort = sortmethods[Sort.Value]
-								})
-							end
+							-- Regular mode: update target every frame.
+							ent = getTarget()
 						end
-	
+
 						if ent then
 							local delta = (ent.RootPart.Position - entitylib.character.RootPart.Position)
 							local localfacing = entitylib.character.RootPart.CFrame.LookVector * Vector3.new(1, 0, 1)
 							local angle = math.acos(localfacing:Dot((delta * Vector3.new(1, 0, 1)).Unit))
-							-- Check if the target is within the allowed angle.
+							-- Only proceed if the target is within the allowed angle.
 							if angle >= (math.rad(AngleSlider.Value) / 2) then
-								-- In non-Single Mode, clear lockedTarget if the target is off-angle.
-								if not SingleMode.Enabled then
-									lockedTarget = nil
-								end
 								return
 							end
 							targetinfo.Targets[ent] = tick() + 1
@@ -1241,7 +1229,10 @@ run(function()
 								(AimSpeed.Value + (StrafeIncrease.Enabled and (inputService:IsKeyDown(Enum.KeyCode.A) or inputService:IsKeyDown(Enum.KeyCode.D)) and 10 or 0)) * dt
 							)
 						else
-							lockedTarget = nil
+							-- Clear locked target if no valid target is found.
+							if SingleMode.Enabled then
+								lockedTarget = nil
+							end
 						end
 					end
 				end))
@@ -1300,6 +1291,7 @@ run(function()
 		Tooltip = 'Locks onto the initial target and does not switch until it is no longer valid.'
 	})
 end)
+
 
 
 
