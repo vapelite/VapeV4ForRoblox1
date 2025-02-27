@@ -1260,7 +1260,6 @@ run(function()
 		Tooltip = 'Locks onto the initial target and does not switch until it is no longer valid.'
 	})
 end)
-
 	
 run(function()
 	local AutoClicker
