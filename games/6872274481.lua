@@ -1183,22 +1183,22 @@ run(function()
 			if callback then
 				AimAssist:Clean(runService.Heartbeat:Connect(function(dt)
 					if entitylib.isAlive and store.hand.toolType == 'sword' and ((not ClickAim.Enabled) or (tick() - bedwars.SwordController.lastSwing) < 0.4) then
-						local ent = KillauraTarget.Enabled and store.KillauraTarget or entitylib.EntityPosition({
-							Range = Distance.Value,
-							Part = 'RootPart',
-							Wallcheck = Targets.Walls.Enabled,
-							Players = Targets.Players.Enabled,
-							NPCs = Targets.NPCs.Enabled,
-							Sort = sortmethods[Sort.Value]
-						})
+						local ent = nil
+						if SingleMode.Enabled and targetinfo.LastTarget and targetinfo.LastTarget.Parent then
+							ent = targetinfo.LastTarget
+						else
+							ent = KillauraTarget.Enabled and store.KillauraTarget or entitylib.EntityPosition({
+								Range = Distance.Value,
+								Part = 'RootPart',
+								Wallcheck = Targets.Walls.Enabled,
+								Players = Targets.Players.Enabled,
+								NPCs = Targets.NPCs.Enabled,
+								Sort = sortmethods[Sort.Value]
+							})
+							targetinfo.LastTarget = ent
+						end
 
 						if ent then
-							if SingleMode.Enabled and targetinfo.LastTarget and targetinfo.LastTarget.Parent then
-								ent = targetinfo.LastTarget
-							else
-								targetinfo.LastTarget = ent
-							end
-
 							local delta = (ent.RootPart.Position - entitylib.character.RootPart.Position)
 							local localfacing = entitylib.character.RootPart.CFrame.LookVector * Vector3.new(1, 0, 1)
 							local angle = math.acos(localfacing:Dot((delta * Vector3.new(1, 0, 1)).Unit))
@@ -1260,6 +1260,7 @@ run(function()
 		Tooltip = 'Locks onto the initial target and does not switch until it is no longer valid.'
 	})
 end)
+
 
 	
 run(function()
