@@ -1176,7 +1176,6 @@ run(function()
 	local KillauraTarget
 	local ClickAim
 	local SingleMode
-	local lastTarget
 
 	AimAssist = vape.Categories.Combat:CreateModule({
 		Name = 'AimAssist',
@@ -1193,15 +1192,13 @@ run(function()
 							Sort = sortmethods[Sort.Value]
 						})
 
-						if SingleMode.Enabled then
-							if lastTarget and lastTarget.Parent then
-								ent = lastTarget
-							else
-								lastTarget = ent
-							end
-						end
-
 						if ent then
+							if SingleMode.Enabled and targetinfo.LastTarget and targetinfo.LastTarget.Parent then
+								ent = targetinfo.LastTarget
+							else
+								targetinfo.LastTarget = ent
+							end
+
 							local delta = (ent.RootPart.Position - entitylib.character.RootPart.Position)
 							local localfacing = entitylib.character.RootPart.CFrame.LookVector * Vector3.new(1, 0, 1)
 							local angle = math.acos(localfacing:Dot((delta * Vector3.new(1, 0, 1)).Unit))
@@ -1215,31 +1212,26 @@ run(function()
 		end,
 		Tooltip = 'Smoothly aims to closest valid target with sword'
 	})
-
 	Targets = AimAssist:CreateTargets({
 		Players = true, 
 		Walls = true
 	})
-
 	local methods = {'Damage', 'Distance'}
 	for i in sortmethods do
 		if not table.find(methods, i) then
 			table.insert(methods, i)
 		end
 	end
-
 	Sort = AimAssist:CreateDropdown({
 		Name = 'Target Mode',
 		List = methods
 	})
-
 	AimSpeed = AimAssist:CreateSlider({
 		Name = 'Aim Speed',
 		Min = 1,
 		Max = 20,
 		Default = 6
 	})
-
 	Distance = AimAssist:CreateSlider({
 		Name = 'Distance',
 		Min = 1,
@@ -1249,60 +1241,26 @@ run(function()
 			return val == 1 and 'stud' or 'studs' 
 		end
 	})
-
 	AngleSlider = AimAssist:CreateSlider({
 		Name = 'Max angle',
 		Min = 1,
 		Max = 360,
 		Default = 70
 	})
-
 	ClickAim = AimAssist:CreateToggle({
 		Name = 'Click Aim',
 		Default = true
 	})
-
 	KillauraTarget = AimAssist:CreateToggle({
 		Name = 'Use killaura target'
 	})
-
-	StrafeIncrease = AimAssist:CreateToggle({
-		Name = 'Strafe increase'
-	})
-
+	StrafeIncrease = AimAssist:CreateToggle({Name = 'Strafe increase'})
 	SingleMode = AimAssist:CreateToggle({
 		Name = 'Single Mode',
 		Tooltip = 'Locks onto the initial target and does not switch until it is no longer valid.'
 	})
 end)
 
-end)
-	
-run(function()
-	local Value
-	
-	Reach = vape.Categories.Combat:CreateModule({
-		Name = 'Reach',
-		Function = function(callback)
-			bedwars.CombatConstant.RAYCAST_SWORD_CHARACTER_DISTANCE = callback and Value.Value + 2 or 14.4
-		end,
-		Tooltip = 'Extends attack reach'
-	})
-	Value = Reach:CreateSlider({
-		Name = 'Range',
-		Min = 0,
-		Max = 18,
-		Default = 18,
-		Function = function(val)
-			if Reach.Enabled then
-				bedwars.CombatConstant.RAYCAST_SWORD_CHARACTER_DISTANCE = val + 2
-			end
-		end,
-		Suffix = function(val)
-			return val == 1 and 'stud' or 'studs'
-		end
-	})
-end)
 	
 run(function()
 	local Sprint
