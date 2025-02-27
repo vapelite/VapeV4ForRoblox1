@@ -1180,22 +1180,73 @@ run(function()
 		Name = 'AimAssist',
 		Function = function(callback)
 			if callback then
+				local currentTarget -- Track locked target for Single mode
 				AimAssist:Clean(runService.Heartbeat:Connect(function(dt)
 					if entitylib.isAlive and store.hand.toolType == 'sword' and ((not ClickAim.Enabled) or (tick() - bedwars.SwordController.lastSwing) < 0.4) then
-						local ent = KillauraTarget.Enabled and store.KillauraTarget or entitylib.EntityPosition({
-							Range = Distance.Value,
-							Part = 'RootPart',
-							Wallcheck = Targets.Walls.Enabled,
-							Players = Targets.Players.Enabled,
-							NPCs = Targets.NPCs.Enabled,
-							Sort = sortmethods[Sort.Value]
-						})
-	
+						local ent = KillauraTarget.Enabled and store.KillauraTarget or (function()
+							if Sort.Value == 'Single' then
+								-- Check if current target is still valid
+								local validEnt
+								if currentTarget then
+									validEnt = entitylib.EntityPosition({
+										Range = Distance.Value,
+										Part = 'RootPart',
+										Wallcheck = Targets.Walls.Enabled,
+										Players = Targets.Players.Enabled,
+										NPCs = Targets.NPCs.Enabled,
+										Sort = function(entities)
+											return table.find(entities, currentTarget) and {currentTarget} or {}
+										end
+									})
+								end
+								if validEnt then
+									return validEnt
+								else
+									-- Find new target based on crosshair proximity
+									local newEnt = entitylib.EntityPosition({
+										Range = Distance.Value,
+										Part = 'RootPart',
+										Wallcheck = Targets.Walls.Enabled,
+										Players = Targets.Players.Enabled,
+										NPCs = Targets.NPCs.Enabled,
+										Sort = function(entities)
+											local cameraPos = gameCamera.CFrame.p
+											local cameraLook = gameCamera.CFrame.LookVector
+											local sorted = {}
+											for _, e in pairs(entities) do
+												local delta = e.RootPart.Position - cameraPos
+												local dir = delta.Unit
+												local angle = math.acos(cameraLook:Dot(dir))
+												table.insert(sorted, {entity = e, angle = angle})
+											end
+											table.sort(sorted, function(a, b) return a.angle < b.angle end)
+											local result = {}
+											for _, item in ipairs(sorted) do
+												table.insert(result, item.entity)
+											end
+											return result
+										end
+									})
+									currentTarget = newEnt
+									return newEnt
+								end
+							else
+								return entitylib.EntityPosition({
+									Range = Distance.Value,
+									Part = 'RootPart',
+									Wallcheck = Targets.Walls.Enabled,
+									Players = Targets.Players.Enabled,
+									NPCs = Targets.NPCs.Enabled,
+									Sort = sortmethods[Sort.Value]
+								})
+							end
+						end)()
+
 						if ent then
 							local delta = (ent.RootPart.Position - entitylib.character.RootPart.Position)
 							local localfacing = entitylib.character.RootPart.CFrame.LookVector * Vector3.new(1, 0, 1)
 							local angle = math.acos(localfacing:Dot((delta * Vector3.new(1, 0, 1)).Unit))
-							if angle >= (math.rad(AngleSlider.Value) / 2) then return end
+							if angle >= (math.rad(AngleSlider.Value) / 2 then return end
 							targetinfo.Targets[ent] = tick() + 1
 							gameCamera.CFrame = gameCamera.CFrame:Lerp(CFrame.lookAt(gameCamera.CFrame.p, ent.RootPart.Position), (AimSpeed.Value + (StrafeIncrease.Enabled and (inputService:IsKeyDown(Enum.KeyCode.A) or inputService:IsKeyDown(Enum.KeyCode.D)) and 10 or 0)) * dt)
 						end
@@ -1215,6 +1266,7 @@ run(function()
 			table.insert(methods, i)
 		end
 	end
+	table.insert(methods, 'Single') -- Add Single mode to dropdown
 	Sort = AimAssist:CreateDropdown({
 		Name = 'Target Mode',
 		List = methods
@@ -1230,7 +1282,7 @@ run(function()
 		Min = 1,
 		Max = 30,
 		Default = 30,
-		Suffx = function(val) 
+		Suffix = function(val) 
 			return val == 1 and 'stud' or 'studs' 
 		end
 	})
