@@ -1176,42 +1176,82 @@ run(function()
 	local KillauraTarget
 	local ClickAim
 	local SingleMode
+	local lockedTarget = nil
 
 	AimAssist = vape.Categories.Combat:CreateModule({
 		Name = 'AimAssist',
 		Function = function(callback)
 			if callback then
 				AimAssist:Clean(runService.Heartbeat:Connect(function(dt)
+					-- Keep the sword check and swing timing intact.
 					if entitylib.isAlive and store.hand.toolType == 'sword' and ((not ClickAim.Enabled) or (tick() - bedwars.SwordController.lastSwing) < 0.4) then
 						local ent = nil
-						if SingleMode.Enabled and targetinfo.LastTarget and targetinfo.LastTarget.Parent then
-							ent = targetinfo.LastTarget
+						
+						-- If Single Mode is enabled, check if we already have a valid locked target.
+						if SingleMode.Enabled then
+							if lockedTarget and lockedTarget.Parent then
+								ent = lockedTarget
+							else
+								-- Lock onto a new target if none exists.
+								if KillauraTarget.Enabled then
+									lockedTarget = store.KillauraTarget
+								else
+									lockedTarget = entitylib.EntityPosition({
+										Range = Distance.Value,
+										Part = 'RootPart',
+										Wallcheck = Targets.Walls.Enabled,
+										Players = Targets.Players.Enabled,
+										NPCs = Targets.NPCs.Enabled,
+										Sort = sortmethods[Sort.Value]
+									})
+								end
+								ent = lockedTarget
+							end
 						else
-							ent = KillauraTarget.Enabled and store.KillauraTarget or entitylib.EntityPosition({
-								Range = Distance.Value,
-								Part = 'RootPart',
-								Wallcheck = Targets.Walls.Enabled,
-								Players = Targets.Players.Enabled,
-								NPCs = Targets.NPCs.Enabled,
-								Sort = sortmethods[Sort.Value]
-							})
-							targetinfo.LastTarget = ent
+							-- Normal mode: update the target every frame.
+							if KillauraTarget.Enabled then
+								ent = store.KillauraTarget
+							else
+								ent = entitylib.EntityPosition({
+									Range = Distance.Value,
+									Part = 'RootPart',
+									Wallcheck = Targets.Walls.Enabled,
+									Players = Targets.Players.Enabled,
+									NPCs = Targets.NPCs.Enabled,
+									Sort = sortmethods[Sort.Value]
+								})
+							end
 						end
-
+	
 						if ent then
 							local delta = (ent.RootPart.Position - entitylib.character.RootPart.Position)
 							local localfacing = entitylib.character.RootPart.CFrame.LookVector * Vector3.new(1, 0, 1)
 							local angle = math.acos(localfacing:Dot((delta * Vector3.new(1, 0, 1)).Unit))
-							if angle >= (math.rad(AngleSlider.Value) / 2) then return end
+							-- Check if the target is within the allowed angle.
+							if angle >= (math.rad(AngleSlider.Value) / 2) then
+								-- In non-Single Mode, clear lockedTarget if the target is off-angle.
+								if not SingleMode.Enabled then
+									lockedTarget = nil
+								end
+								return
+							end
 							targetinfo.Targets[ent] = tick() + 1
-							gameCamera.CFrame = gameCamera.CFrame:Lerp(CFrame.lookAt(gameCamera.CFrame.p, ent.RootPart.Position), (AimSpeed.Value + (StrafeIncrease.Enabled and (inputService:IsKeyDown(Enum.KeyCode.A) or inputService:IsKeyDown(Enum.KeyCode.D)) and 10 or 0)) * dt)
+							gameCamera.CFrame = gameCamera.CFrame:Lerp(
+								CFrame.lookAt(gameCamera.CFrame.p, ent.RootPart.Position),
+								(AimSpeed.Value + (StrafeIncrease.Enabled and (inputService:IsKeyDown(Enum.KeyCode.A) or inputService:IsKeyDown(Enum.KeyCode.D)) and 10 or 0)) * dt
+							)
+						else
+							lockedTarget = nil
 						end
 					end
 				end))
+			else
+				lockedTarget = nil
 			end
 		end,
 		Tooltip = 'Smoothly aims to closest valid target with sword'
 	})
+	
 	Targets = AimAssist:CreateTargets({
 		Players = true, 
 		Walls = true
