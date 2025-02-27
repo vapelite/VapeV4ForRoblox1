@@ -1175,7 +1175,8 @@ run(function()
 	local StrafeIncrease
 	local KillauraTarget
 	local ClickAim
-	
+	local SingleMode
+
 	AimAssist = vape.Categories.Combat:CreateModule({
 		Name = 'AimAssist',
 		Function = function(callback)
@@ -1190,8 +1191,14 @@ run(function()
 							NPCs = Targets.NPCs.Enabled,
 							Sort = sortmethods[Sort.Value]
 						})
-	
+
 						if ent then
+							if SingleMode.Enabled and targetinfo.LastTarget and targetinfo.LastTarget.Parent then
+								ent = targetinfo.LastTarget
+							else
+								targetinfo.LastTarget = ent
+							end
+
 							local delta = (ent.RootPart.Position - entitylib.character.RootPart.Position)
 							local localfacing = entitylib.character.RootPart.CFrame.LookVector * Vector3.new(1, 0, 1)
 							local angle = math.acos(localfacing:Dot((delta * Vector3.new(1, 0, 1)).Unit))
@@ -1248,7 +1255,12 @@ run(function()
 		Name = 'Use killaura target'
 	})
 	StrafeIncrease = AimAssist:CreateToggle({Name = 'Strafe increase'})
+	SingleMode = AimAssist:CreateToggle({
+		Name = 'Single Mode',
+		Tooltip = 'Locks onto the initial target and does not switch until it is no longer valid.'
+	})
 end)
+
 	
 run(function()
 	local AutoClicker
