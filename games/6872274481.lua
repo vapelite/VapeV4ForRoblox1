@@ -1176,6 +1176,7 @@ run(function()
 	local KillauraTarget
 	local ClickAim
 	local SingleMode
+	local lastTarget
 
 	AimAssist = vape.Categories.Combat:CreateModule({
 		Name = 'AimAssist',
@@ -1192,13 +1193,15 @@ run(function()
 							Sort = sortmethods[Sort.Value]
 						})
 
-						if ent then
-							if SingleMode.Enabled and targetinfo.LastTarget and targetinfo.LastTarget.Parent then
-								ent = targetinfo.LastTarget
+						if SingleMode.Enabled then
+							if lastTarget and lastTarget.Parent then
+								ent = lastTarget
 							else
-								targetinfo.LastTarget = ent
+								lastTarget = ent
 							end
+						end
 
+						if ent then
 							local delta = (ent.RootPart.Position - entitylib.character.RootPart.Position)
 							local localfacing = entitylib.character.RootPart.CFrame.LookVector * Vector3.new(1, 0, 1)
 							local angle = math.acos(localfacing:Dot((delta * Vector3.new(1, 0, 1)).Unit))
@@ -1212,26 +1215,31 @@ run(function()
 		end,
 		Tooltip = 'Smoothly aims to closest valid target with sword'
 	})
+
 	Targets = AimAssist:CreateTargets({
 		Players = true, 
 		Walls = true
 	})
+
 	local methods = {'Damage', 'Distance'}
 	for i in sortmethods do
 		if not table.find(methods, i) then
 			table.insert(methods, i)
 		end
 	end
+
 	Sort = AimAssist:CreateDropdown({
 		Name = 'Target Mode',
 		List = methods
 	})
+
 	AimSpeed = AimAssist:CreateSlider({
 		Name = 'Aim Speed',
 		Min = 1,
 		Max = 20,
 		Default = 6
 	})
+
 	Distance = AimAssist:CreateSlider({
 		Name = 'Distance',
 		Min = 1,
@@ -1241,139 +1249,33 @@ run(function()
 			return val == 1 and 'stud' or 'studs' 
 		end
 	})
+
 	AngleSlider = AimAssist:CreateSlider({
 		Name = 'Max angle',
 		Min = 1,
 		Max = 360,
 		Default = 70
 	})
+
 	ClickAim = AimAssist:CreateToggle({
 		Name = 'Click Aim',
 		Default = true
 	})
+
 	KillauraTarget = AimAssist:CreateToggle({
 		Name = 'Use killaura target'
 	})
-	StrafeIncrease = AimAssist:CreateToggle({Name = 'Strafe increase'})
+
+	StrafeIncrease = AimAssist:CreateToggle({
+		Name = 'Strafe increase'
+	})
+
 	SingleMode = AimAssist:CreateToggle({
 		Name = 'Single Mode',
 		Tooltip = 'Locks onto the initial target and does not switch until it is no longer valid.'
 	})
 end)
-	
-run(function()
-	local AutoClicker
-	local CPS
-	local BlockCPS = {}
-	local Thread
-	
-	local function AutoClick()
-		if Thread then
-			task.cancel(Thread)
-		end
-	
-		Thread = task.delay(1 / 7, function()
-			repeat
-				if not bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then
-					local blockPlacer = bedwars.BlockPlacementController.blockPlacer
-					if store.hand.toolType == 'block' and blockPlacer then
-						if (workspace:GetServerTimeNow() - bedwars.BlockCpsController.lastPlaceTimestamp) >= ((1 / 12) * 0.5) then
-							local mouseinfo = blockPlacer.clientManager:getBlockSelector():getMouseInfo(0)
-							if mouseinfo and mouseinfo.placementPosition == mouseinfo.placementPosition then
-								task.spawn(blockPlacer.placeBlock, blockPlacer, mouseinfo.placementPosition)
-							end
-						end
-					elseif store.hand.toolType == 'sword' and bedwars.DaoController.chargingMaid == nil then
-						bedwars.SwordController:swingSwordAtMouse()
-					end
-				end
-	
-				task.wait(1 / (store.hand.toolType == 'block' and BlockCPS or CPS).GetRandomValue())
-			until not AutoClicker.Enabled
-		end)
-	end
-	
-	AutoClicker = vape.Categories.Combat:CreateModule({
-		Name = 'AutoClicker',
-		Function = function(callback)
-			if callback then
-				AutoClicker:Clean(inputService.InputBegan:Connect(function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 then
-						AutoClick()
-					end
-				end))
-	
-				AutoClicker:Clean(inputService.InputEnded:Connect(function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 and Thread then
-						task.cancel(Thread)
-						Thread = nil
-					end
-				end))
-	
-				if inputService.TouchEnabled then
-					pcall(function()
-						AutoClicker:Clean(lplr.PlayerGui.MobileUI['2'].MouseButton1Down:Connect(AutoClick))
-						AutoClicker:Clean(lplr.PlayerGui.MobileUI['2'].MouseButton1Up:Connect(function()
-							if Thread then
-								task.cancel(Thread)
-								Thread = nil
-							end
-						end))
-					end)
-				end
-			else
-				if Thread then
-					task.cancel(Thread)
-					Thread = nil
-				end
-			end
-		end,
-		Tooltip = 'Hold attack button to automatically click'
-	})
-	CPS = AutoClicker:CreateTwoSlider({
-		Name = 'CPS',
-		Min = 1,
-		Max = 9,
-		DefaultMin = 7,
-		DefaultMax = 7
-	})
-	AutoClicker:CreateToggle({
-		Name = 'Place Blocks',
-		Default = true,
-		Function = function(callback)
-			if BlockCPS.Object then
-				BlockCPS.Object.Visible = callback
-			end
-		end
-	})
-	BlockCPS = AutoClicker:CreateTwoSlider({
-		Name = 'Block CPS',
-		Min = 1,
-		Max = 12,
-		DefaultMin = 12,
-		DefaultMax = 12,
-		Darker = true
-	})
-end)
-	
-run(function()
-	local old
-	
-	vape.Categories.Combat:CreateModule({
-		Name = 'NoClickDelay',
-		Function = function(callback)
-			if callback then
-				old = bedwars.SwordController.isClickingTooFast
-				bedwars.SwordController.isClickingTooFast = function(self)
-					self.lastSwing = tick()
-					return false
-				end
-			else
-				bedwars.SwordController.isClickingTooFast = old
-			end
-		end,
-		Tooltip = 'Remove the CPS cap'
-	})
+
 end)
 	
 run(function()
