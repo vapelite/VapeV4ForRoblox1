@@ -8576,32 +8576,34 @@ run(function()
 	})
 end)
 
-
 run(function()
     local FastPlace
     local PlacementTime
+
+    -- Get the necessary services and modules
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local BlockEngine = require(ReplicatedStorage.rbxts_include.node_modules["@easy-games"].block_engine.out)
+    local BlockPlacer = BlockEngine.client.placement["block-placer"].BlockPlacer
+
+    -- Store the original placeBlock function
+    local originalPlaceBlock = BlockPlacer.placeBlock
 
     FastPlace = vape.Categories.Blatant:CreateModule({
         Name = 'FastPlace',
         Function = function(callback)
             if callback then
-                -- Store the original placement delay
-                local originalDelay = BlockPlacer.placementDelay
-
-                -- Continuously set the placement delay to the desired value
-                while FastPlace.Enabled do
-                    BlockPlacer.placementDelay = PlacementTime.Value
-                    task.wait() -- Yield to prevent freezing
+                -- Override the placeBlock function
+                BlockPlacer.placeBlock = function(...)
+                    -- Call the original function with no delay
+                    originalPlaceBlock(...)
+                    return true -- Simulate successful placement
                 end
-
-                -- Restore the original placement delay when the module is disabled
-                BlockPlacer.placementDelay = originalDelay
             else
-                -- If the module is disabled, reset the placement delay to default
-                BlockPlacer.placementDelay = 0.1 -- Default placement delay
+                -- Restore the original placeBlock function
+                BlockPlacer.placeBlock = originalPlaceBlock
             end
         end,
-        Tooltip = 'Decreases block placement delay'
+        Tooltip = 'Increases block placement speed'
     })
 
     PlacementTime = FastPlace:CreateSlider({
