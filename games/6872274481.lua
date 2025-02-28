@@ -8575,3 +8575,41 @@ run(function()
 		Default = true
 	})
 end)
+
+
+run(function()
+    local FastPlace
+    local PlacementTime
+
+    FastPlace = vape.Categories.Blatant:CreateModule({
+        Name = 'FastPlace',
+        Function = function(callback)
+            if callback then
+                -- Store the original placement delay
+                local originalDelay = BlockPlacer.placementDelay
+
+                -- Continuously set the placement delay to the desired value
+                while FastPlace.Enabled do
+                    BlockPlacer.placementDelay = PlacementTime.Value
+                    task.wait() -- Yield to prevent freezing
+                end
+
+                -- Restore the original placement delay when the module is disabled
+                BlockPlacer.placementDelay = originalDelay
+            else
+                -- If the module is disabled, reset the placement delay to default
+                BlockPlacer.placementDelay = 0.1 -- Default placement delay
+            end
+        end,
+        Tooltip = 'Decreases block placement delay'
+    })
+
+    PlacementTime = FastPlace:CreateSlider({
+        Name = 'Placement speed',
+        Min = 0,
+        Max = 0.2,
+        Default = 0.1,
+        Decimal = 100,
+        Suffix = 'seconds'
+    })
+end)
