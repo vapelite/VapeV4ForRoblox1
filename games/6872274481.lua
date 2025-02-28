@@ -1737,7 +1737,7 @@ run(function()
 			if callback then
 				repeat
 					bedwars.BlockBreakController.blockBreaker:setCooldown(Time.Value)
-					task.wait(0.1) -- Pause for 0.1 seconds after setting the cooldown
+					task.wait(0.3) -- Pause for 0.1 seconds after setting the cooldown
 				until not FastBreak.Enabled
 			else
 				bedwars.BlockBreakController.blockBreaker:setCooldown(0.3)
