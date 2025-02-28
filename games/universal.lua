@@ -6010,80 +6010,70 @@ run(function()
 end)
 	
 run(function()
-    local Blink = {}
-    local Type, AutoSend, AutoSendLength
-    local rateCache = {physics = nil, data = nil}
-    
-    local function updateRates(physics, data)
-        if rateCache.physics ~= physics then
-            setfflag('S2PhysicsSenderRate', physics)
-            rateCache.physics = physics
-        end
-        if rateCache.data ~= data then
-            setfflag('DataSenderRate', data)
-            rateCache.data = data
-        end
-    end
-
-    Blink = vape.Categories.Utility:CreateModule({
-        Name = 'Blink',
-        Function = function(callback)
-            if callback then
-                local teleported
-                Blink:Clean(lplr.OnTeleport:Connect(function()
-                    updateRates('15', '60')
-                    teleported = true
-                end))
-
-                local lastSend = 0
-                while Blink.Enabled and not teleported do
-                    local currentTime = tick()
-                    local sendNow = AutoSend.Enabled and (currentTime - lastSend > AutoSendLength.Value)
-                    
-                    if sendNow then
-                        updateRates('15', '60')
-                        lastSend = currentTime
-                    else
-                        updateRates(
-                            '1',  -- Delayed physics (1 packet/sec)
-                            Type.Value == 'All' and '5' or '60'  -- Delayed/normal data
-                        )
-                    end
-                    
-                    task.wait(0.1)  -- Reduced update frequency
-                end
-                updateRates('15', '60')
-            else
-                updateRates('15', '60')
-                rateCache = {physics = nil, data = nil}
-            end
-        end,
-        Tooltip = 'Delays packets instead of stopping them completely'
-    })
-
-    Type = Blink:CreateDropdown({
-        Name = 'Type',
-        List = {'Movement Only', 'All'},
-        Tooltip = 'Movement Only: Delay movement packets\nAll: Delay both movement and data'
-    })
-
-    AutoSend = Blink:CreateToggle({
-        Name = 'Auto send',
-        Function = function(cb)
-            AutoSendLength.Object.Visible = cb
-        end,
-        Tooltip = 'Periodically flush delayed packets'
-    })
-
-    AutoSendLength = Blink:CreateSlider({
-        Name = 'Send interval',
-        Min = 0.1,
-        Max = 1.5,
-        Decimal = 100,
-        Default = 0.5,
-        Visible = false,
-        Suffix = ' seconds'
-    })
+	local Blink
+	local Type
+	local AutoSend
+	local AutoSendLength
+	local oldphys, oldsend
+	
+	Blink = vape.Categories.Utility:CreateModule({
+		Name = 'Blink',
+		Function = function(callback)
+			if callback then
+				local teleported
+				Blink:Clean(lplr.OnTeleport:Connect(function()
+					setfflag('S2PhysicsSenderRate', '15')
+					setfflag('DataSenderRate', '60')
+					teleported = true
+				end))
+	
+				repeat
+					local physicsrate, senderrate = '0', Type.Value == 'All' and '-1' or '60'
+					if AutoSend.Enabled and tick() % (AutoSendLength.Value + 0.1) > AutoSendLength.Value then
+						physicsrate, senderrate = '15', '60'
+					end
+	
+					if physicsrate ~= oldphys or senderrate ~= oldsend then
+						setfflag('S2PhysicsSenderRate', physicsrate)
+						setfflag('DataSenderRate', senderrate)
+						oldphys, oldsend = physicsrate, oldsend
+					end
+					
+					task.wait(0.03)
+				until (not Blink.Enabled and not teleported)
+			else
+				if setfflag then
+					setfflag('S2PhysicsSenderRate', '15')
+					setfflag('DataSenderRate', '60')
+				end
+				oldphys, oldsend = nil, nil
+			end
+		end,
+		Tooltip = 'Chokes packets until disabled.'
+	})
+	Type = Blink:CreateDropdown({
+		Name = 'Type',
+		List = {'Movement Only', 'All'},
+		Tooltip = 'Movement Only - Only chokes movement packets\nAll - Chokes remotes & movement'
+	})
+	AutoSend = Blink:CreateToggle({
+		Name = 'Auto send',
+		Function = function(callback)
+			AutoSendLength.Object.Visible = callback
+		end,
+		Tooltip = 'Automatically send packets in intervals'
+	})
+	AutoSendLength = Blink:CreateSlider({
+		Name = 'Send threshold',
+		Min = 0,
+		Max = 1,
+		Decimal = 100,
+		Darker = true,
+		Visible = false,
+		Suffix = function(val)
+			return val == 1 and 'second' or 'seconds'
+		end
+	})
 end)
 	
 run(function()
