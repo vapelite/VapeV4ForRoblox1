@@ -8575,3 +8575,47 @@ run(function()
 		Default = true
 	})
 end)
+
+run(function()
+    local FastPlace
+    local PlacementSpeed
+
+    FastPlace = vape.Categories.Blatant:CreateModule({
+        Name = 'FastPlace',
+        Function = function(callback)
+            if callback then
+                repeat
+                    if entitylib.isAlive then
+                        -- Get the block the player is holding
+                        local block, amount = getScaffoldBlock()
+                        if block then
+                            -- Get the player's position and calculate the placement position
+                            local root = entitylib.character.RootPart
+                            local placementPos = roundPos(root.Position + root.CFrame.LookVector * 3) -- Place blocks in front of the player
+
+                            -- Check if there's already a block at the placement position
+                            local existingBlock, _ = getPlacedBlock(placementPos)
+                            if not existingBlock then
+                                -- Place the block
+                                task.spawn(bedwars.placeBlock, placementPos, block, false)
+                            end
+                        end
+                    end
+
+                    -- Adjust the delay based on the slider value
+                    task.wait(PlacementSpeed.Value)
+                until not FastPlace.Enabled
+            end
+        end,
+        Tooltip = 'Increases block placement speed'
+    })
+
+    PlacementSpeed = FastPlace:CreateSlider({
+        Name = 'Placement speed',
+        Min = 0,
+        Max = 0.2,
+        Default = 0.05, -- Faster default speed
+        Decimal = 100,
+        Suffix = 'seconds'
+    })
+end)
