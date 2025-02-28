@@ -1737,12 +1737,10 @@ run(function()
 			if callback then
 				repeat
 					bedwars.BlockBreakController.blockBreaker:setCooldown(Time.Value)
-					FastBreak.Enabled = false -- Turn off the module
-					task.wait(0.1) -- Wait for 0.1 seconds
-					FastBreak.Enabled = true -- Turn the module back on
+					task.wait(0.1)
 				until not FastBreak.Enabled
 			else
-				bedwars.BlockBreakController.blockBreaker:setCooldown(0.3)
+				bedwars.BlockBreakController.blockBreaker:setCooldown(0.21)
 			end
 		end,
 		Tooltip = 'Decreases block hit cooldown'
