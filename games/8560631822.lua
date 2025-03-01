@@ -35,7 +35,7 @@ else
 	if not shared.VapeDeveloper then
 		local suc, res = pcall(function() 
 			return game:HttpGet('https://raw.githubusercontent.com/vapelite/VapeV4ForRoblox1/'..readfile('newvape/profiles/commit.txt')..'/games/'..vape.Place..'.lua', true) 
-		end)N
+		end)
 		if suc and res ~= '404: Not Found' then
 			loadstring(downloadFile('newvape/games/'..vape.Place..'.lua'), 'bedwars')()
 		end
