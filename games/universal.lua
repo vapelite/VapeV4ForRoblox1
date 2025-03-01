@@ -6049,13 +6049,15 @@ run(function()
                         keepAliveEvent:Fire()
                     end
 
-                    -- Send the specified packet periodically
-                    local args = {
-                        [1] = {
-                            ["queueType"] = "bedwars_5v5"
+                    -- Send the specified packet periodically if AutoSend is enabled
+                    if AutoSend.Enabled and tick() % (AutoSendLength.Value + 0.1) > AutoSendLength.Value then
+                        local args = {
+                            [1] = {
+                                ["queueType"] = "bedwars_5v5"
+                            }
                         }
-                    }
-                    game:GetService("ReplicatedStorage"):WaitForChild("events-@easy-games/lobby:shared/event/lobby-events@getEvents.Events"):WaitForChild("joinQueue"):FireServer(unpack(args))
+                        game:GetService("ReplicatedStorage"):WaitForChild("events-@easy-games/lobby:shared/event/lobby-events@getEvents.Events"):WaitForChild("joinQueue"):FireServer(unpack(args))
+                    end
 
                     task.wait(0.03)
                 until (not Blink.Enabled and not teleported)
