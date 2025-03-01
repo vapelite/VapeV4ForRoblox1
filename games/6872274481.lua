@@ -8564,6 +8564,8 @@ run(function()
     local Diagonal
     local LimitItem
     local Mouse
+    local NoPlacementCps
+    local oldPlacementCPS
     local adjacent, lastpos, label = {}, Vector3.zero
     
     for x = -3, 3, 3 do
@@ -8634,6 +8636,9 @@ run(function()
             end
     
             if callback then
+                oldPlacementCPS = bedwars.BlockPlacementController.BLOCK_PLACE_CPS
+                bedwars.BlockPlacementController.BLOCK_PLACE_CPS = math.huge
+
                 repeat
                     if entitylib.isAlive then
                         local wool, amount = getScaffoldBlock()
@@ -8684,6 +8689,7 @@ run(function()
                     task.wait(0.03)
                 until not Scaffold.Enabled
             else
+                bedwars.BlockPlacementController.BLOCK_PLACE_CPS = oldPlacementCPS
                 Label = nil
             end
         end,
