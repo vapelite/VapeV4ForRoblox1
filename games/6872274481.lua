@@ -1301,7 +1301,8 @@ run(function()
     local CPS
     local BlockCPS = {}
     local Thread
-    
+    local oldBlockPlace
+
     local function AutoClick()
         if Thread then
             task.cancel(Thread)
@@ -1332,6 +1333,12 @@ run(function()
         Name = 'AutoClicker',
         Function = function(callback)
             if callback then
+                oldBlockPlace = bedwars.BlockPlacementController.placeBlock
+                bedwars.BlockPlacementController.placeBlock = function(self, ...)
+                    self.lastPlace = tick()
+                    return oldBlockPlace(self, ...)
+                end
+
                 AutoClicker:Clean(inputService.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         AutoClick()
@@ -1361,6 +1368,7 @@ run(function()
                     task.cancel(Thread)
                     Thread = nil
                 end
+                bedwars.BlockPlacementController.placeBlock = oldBlockPlace
             end
         end,
         Tooltip = 'Hold attack button to automatically click'
@@ -1383,11 +1391,31 @@ run(function()
     })
     BlockCPS = AutoClicker:CreateTwoSlider({
         Name = 'Block CPS',
-        Min = 20,
-        Max = 50,
+        Min = 1,
+        Max = 1e+100000000,
         DefaultMin = 25,
         DefaultMax = 25,
         Darker = true
+    })
+end)
+
+run(function()
+    local old
+    
+    vape.Categories.Combat:CreateModule({
+        Name = 'NoClickDelay',
+        Function = function(callback)
+            if callback then
+                old = bedwars.SwordController.isClickingTooFast
+                bedwars.SwordController.isClickingTooFast = function(self)
+                    self.lastSwing = tick()
+                    return false
+                end
+            else
+                bedwars.SwordController.isClickingTooFast = old
+            end
+        end,
+        Tooltip = 'Remove the CPS cap'
     })
 end)
 	
