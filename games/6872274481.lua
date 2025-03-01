@@ -5013,6 +5013,7 @@ run(function()
     
                             for i = Expand.Value, 1, -1 do
                                 local currentpos = roundPos(root.Position - Vector3.new(0, entitylib.character.HipHeight + (Downwards.Enabled and inputService:IsKeyDown(Enum.KeyCode.LeftShift) and 4.5 or 1.5), 0) + entitylib.character.Humanoid.MoveDirection * (i * 3))
+                                
                                 -- Remove or comment out the diagonal building logic
                                 -- if Diagonal.Enabled then
                                 --     if math.abs(math.round(math.deg(math.atan2(-entitylib.character.Humanoid.MoveDirection.X, -entitylib.character.Humanoid.MoveDirection.Z)) / 45) * 45) % 90 == 45 then
