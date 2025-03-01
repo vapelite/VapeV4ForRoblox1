@@ -1313,11 +1313,9 @@ run(function()
                 if not bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then
                     local blockPlacer = bedwars.BlockPlacementController.blockPlacer
                     if store.hand.toolType == 'block' and blockPlacer then
-                        if (workspace:GetServerTimeNow() - bedwars.BlockCpsController.lastPlaceTimestamp) >= ((1 / 12) * 0.5) then
-                            local mouseinfo = blockPlacer.clientManager:getBlockSelector():getMouseInfo(0)
-                            if mouseinfo and mouseinfo.placementPosition == mouseinfo.placementPosition then
-                                task.spawn(blockPlacer.placeBlock, blockPlacer, mouseinfo.placementPosition)
-                            end
+                        local mouseinfo = blockPlacer.clientManager:getBlockSelector():getMouseInfo(0)
+                        if mouseinfo and mouseinfo.placementPosition == mouseinfo.placementPosition then
+                            task.spawn(blockPlacer.placeBlock, blockPlacer, mouseinfo.placementPosition)
                         end
                     elseif store.hand.toolType == 'sword' and bedwars.DaoController.chargingMaid == nil then
                         bedwars.SwordController:swingSwordAtMouse()
@@ -1396,6 +1394,26 @@ run(function()
         DefaultMin = 25,
         DefaultMax = 25,
         Darker = true
+    })
+end)
+
+run(function()
+    local old
+    
+    vape.Categories.Combat:CreateModule({
+        Name = 'NoClickDelay',
+        Function = function(callback)
+            if callback then
+                old = bedwars.SwordController.isClickingTooFast
+                bedwars.SwordController.isClickingTooFast = function(self)
+                    self.lastSwing = tick()
+                    return false
+                end
+            else
+                bedwars.SwordController.isClickingTooFast = old
+            end
+        end,
+        Tooltip = 'Remove the CPS cap'
     })
 end)
 
