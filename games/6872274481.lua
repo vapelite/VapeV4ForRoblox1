@@ -1418,6 +1418,44 @@ run(function()
 end)
 
 run(function()
+    local oldPlacementCPS
+    local NoPlacementCps
+
+    NoPlacementCps = vape.Categories.Utility:CreateModule({
+        Name = 'NoPlacementCps',
+        Function = function(callback)
+            if callback then
+                oldPlacementCPS = bedwars.BlockPlacementController.BLOCK_PLACE_CPS
+                bedwars.BlockPlacementController.BLOCK_PLACE_CPS = math.huge
+            else
+                bedwars.BlockPlacementController.BLOCK_PLACE_CPS = oldPlacementCPS
+            end
+        end,
+        Tooltip = 'Remove the block placement CPS cap'
+    })
+end)
+
+run(function()
+    local old
+    
+    vape.Categories.Combat:CreateModule({
+        Name = 'NoClickDelay',
+        Function = function(callback)
+            if callback then
+                old = bedwars.SwordController.isClickingTooFast
+                bedwars.SwordController.isClickingTooFast = function(self)
+                    self.lastSwing = tick()
+                    return false
+                end
+            else
+                bedwars.SwordController.isClickingTooFast = old
+            end
+        end,
+        Tooltip = 'Remove the CPS cap'
+    })
+end)
+
+run(function()
     local old
     
     vape.Categories.Combat:CreateModule({
