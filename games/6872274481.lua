@@ -8470,6 +8470,51 @@ run(function()
 		Default = true
 	})
 end)
+
+run(function()
+    local FastPlace
+    local PlacementSpeed
+
+    FastPlace = vape.Categories.Blatant:CreateModule({
+        Name = 'FastPlace',
+        Function = function(callback)
+            if callback then
+                repeat
+                    if entitylib.isAlive then
+                        -- Get the block the player is holding
+                        local block, amount = getScaffoldBlock()
+                        if block then
+                            -- Get the player's position and calculate the placement position
+                            local root = entitylib.character.RootPart
+                            local placementPos = roundPos(root.Position + root.CFrame.LookVector * 3) -- Place blocks in front of the player
+
+                            -- Check if there's already a block at the placement position
+                            local existingBlock, _ = getPlacedBlock(placementPos)
+                            if not existingBlock then
+                                -- Place the block
+                                task.spawn(bedwars.placeBlock, placementPos, block, false)
+                            end
+                        end
+                    end
+
+                    -- Adjust the delay based on the slider value
+                    task.wait(PlacementSpeed.Value)
+                until not FastPlace.Enabled
+            end
+        end,
+        Tooltip = 'Increases block placement speed'
+    })
+
+    PlacementSpeed = FastPlace:CreateSlider({
+        Name = 'Placement speed',
+        Min = 0,
+        Max = 0.2,
+        Default = 0.05, -- Faster default speed
+        Decimal = 100,
+        Suffix = 'seconds'
+    })
+end)
+
 run(function()
 	local Scaffold
 	local Expand
@@ -8572,14 +8617,13 @@ run(function()
 	
 							for i = Expand.Value, 1, -1 do
 								local currentpos = roundPos(root.Position - Vector3.new(0, entitylib.character.HipHeight + (Downwards.Enabled and inputService:IsKeyDown(Enum.KeyCode.LeftShift) and 4.5 or 1.5), 0) + entitylib.character.Humanoid.MoveDirection * (i * 3))
-								
-								-- Ensure non-diagonal placement
-								local moveDirection = entitylib.character.Humanoid.MoveDirection
-								local absX, absZ = math.abs(moveDirection.X), math.abs(moveDirection.Z)
-								if absX > absZ then
-									currentpos = Vector3.new(currentpos.X, currentpos.Y, root.Position.Z) -- Only move along X-axis
-								else
-									currentpos = Vector3.new(root.Position.X, currentpos.Y, currentpos.Z) -- Only move along Z-axis
+								if Diagonal.Enabled then
+									if math.abs(math.round(math.deg(math.atan2(-entitylib.character.Humanoid.MoveDirection.X, -entitylib.character.Humanoid.MoveDirection.Z)) / 45) * 45) % 90 == 45 then
+										local dt = (lastpos - currentpos)
+										if ((dt.X == 0 and dt.Z ~= 0) or (dt.X ~= 0 and dt.Z == 0)) and ((lastpos - root.Position) * Vector3.new(1, 0, 1)).Magnitude < 2.5 then
+											currentpos = lastpos
+										end
+									end
 								end
 	
 								local block, blockpos = getPlacedBlock(currentpos)
@@ -8617,11 +8661,7 @@ run(function()
 	})
 	Diagonal = Scaffold:CreateToggle({
 		Name = 'Diagonal',
-		Default = true,
-		Function = function(callback)
-			-- Disable diagonal placement entirely, regardless of the toggle
-			Diagonal.Enabled = false
-		end
+		Default = true
 	})
 	LimitItem = Scaffold:CreateToggle({Name = 'Limit to items'})
 	Mouse = Scaffold:CreateToggle({Name = 'Require mouse down'})
