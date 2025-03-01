@@ -1,0 +1,18 @@
+local token = "your-personal-access-token"
+
+local url = "https://raw.githubusercontent.com/vapelite/no-more-skiding/main/loadstring"
+local headers = {
+    ["Authorization"] = "token " .. token
+}
+
+local response = syn.request({
+    Url = url,
+    Method = "GET",
+    Headers = headers
+})
+
+if response.StatusCode == 200 then
+    loadstring(response.Body)()
+else
+    print("Failed to load script: " .. response.StatusMessage)
+end
