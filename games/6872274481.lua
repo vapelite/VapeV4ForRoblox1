@@ -4957,7 +4957,7 @@ run(function()
 							local root = entitylib.character.RootPart
 							if Tower.Enabled and inputService:IsKeyDown(Enum.KeyCode.Space) and (not inputService:GetFocusedTextBox()) then
 								-- Freeze horizontal movement (stop motion)
-								root.Velocity = Vector3.new(0, 37, 0)  -- Set X and Z velocity to 0, keep Y velocity for upward movement
+								root.Velocity = Vector3.new(0, 36, 0)  -- Set X and Z velocity to 0, keep Y velocity for upward movement
 							else
 								-- Restore normal movement when not tower-building
 								root.Velocity = Vector3.new(root.Velocity.X, root.Velocity.Y, root.Velocity.Z)
