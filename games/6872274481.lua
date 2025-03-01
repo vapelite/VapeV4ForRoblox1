@@ -1383,10 +1383,10 @@ run(function()
     })
     BlockCPS = AutoClicker:CreateTwoSlider({
         Name = 'Block CPS',
-        Min = 1e+100000000,
-        Max = 1e+100000000,
-        DefaultMin = 1e+100000000,
-        DefaultMax = 1e+100000000,
+        Min = 20,
+        Max = 50,
+        DefaultMin = 25,
+        DefaultMax = 25,
         Darker = true
     })
 end)
