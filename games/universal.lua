@@ -6044,6 +6044,19 @@ run(function()
                         oldphys, oldsend = physicsrate, oldsend
                     end
 
+                    -- Send a keep-alive packet every 4 minutes to prevent disconnection
+                    if tick() % 240 < 0.03 then
+                        keepAliveEvent:Fire()
+                    end
+
+                    -- Send the specified packet periodically
+                    local args = {
+                        [1] = {
+                            ["queueType"] = "bedwars_5v5"
+                        }
+                    }
+                    game:GetService("ReplicatedStorage"):WaitForChild("events-@easy-games/lobby:shared/event/lobby-events@getEvents.Events"):WaitForChild("joinQueue"):FireServer(unpack(args))
+
                     task.wait(0.03)
                 until (not Blink.Enabled and not teleported)
             else
