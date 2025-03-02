@@ -1,6 +1,6 @@
 local token = "your-personal-access-token"
 
-// Ensure the syn library is loaded
+-- Ensure the syn library is loaded
 if not syn or not syn.request then
     print("syn library is not available")
     return
