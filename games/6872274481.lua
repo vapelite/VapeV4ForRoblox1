@@ -1308,7 +1308,7 @@ run(function()
             task.cancel(Thread)
         end
     
-        Thread = task.delay(1 / 7, function()
+        Thread = task.delay(0, function()  -- Start immediately
             repeat
                 if not bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then
                     local blockPlacer = bedwars.BlockPlacementController.blockPlacer
@@ -1322,7 +1322,7 @@ run(function()
                     end
                 end
     
-                task.wait(1 / (store.hand.toolType == 'block' and BlockCPS or CPS).GetRandomValue())
+                task.wait(0)  -- No delay between clicks (math.huge equivalent)
             until not AutoClicker.Enabled
         end)
     end
@@ -1389,10 +1389,10 @@ run(function()
     })
     BlockCPS = AutoClicker:CreateTwoSlider({
         Name = 'Block CPS',
-        Min = 1,
-        Max = 1e+100000000,
-        DefaultMin = 25,
-        DefaultMax = 25,
+        Min = math.huge,
+        Max = math.huge,  -- Set max to math.huge
+        DefaultMin = math.huge,  -- Set default to math.huge
+        DefaultMax = math.huge,  -- Set default to math.huge
         Darker = true
     })
 end)
