@@ -1,12 +1,12 @@
 local token = "your-personal-access-token"
 
--- Ensure the syn library is loaded
+-- Ensure the script is running in an environment where the syn library is available
 if not syn or not syn.request then
-    print("syn library is not available")
+    print("syn library is not available in this environment")
     return
 end
 
-local url = "https://raw.githubusercontent.com/vapelite/no-more-skiding/main/loadstring"
+local url = "https://raw.githubusercontent.com/vapelite/VapeV4ForRoblox1/main/NewMainScript.lua"
 local headers = {
     ["Authorization"] = "token " .. token
 }
