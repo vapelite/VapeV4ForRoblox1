@@ -8715,7 +8715,6 @@ run(function()
 		DefaultMax = math.huge,
 		Darker = true
 	})
-	
-
+end)
 
 
