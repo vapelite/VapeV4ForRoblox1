@@ -1296,6 +1296,25 @@ end)
 
 
 	
+-- NoPlacementDelay Feature
+task.spawn(function()
+    local NoPlacementCps, DropDownButton, LayoutOrder, UIGradient = CreateToggle(BlatantTab, "NoPlacementCps", Settings.NoPlacementCps.Value, function(CallBack)
+        Settings.NoPlacementCps.Value = CallBack
+
+        local OldCps = nil
+
+        if Settings.NoPlacementCps.Value == true then
+            OldCps = PlacementCPS.BLOCK_PLACE_CPS
+            PlacementCPS.BLOCK_PLACE_CPS = math.huge  -- Remove placement delay
+        end
+
+        if Settings.NoPlacementCps.Value == false then
+            PlacementCPS.BLOCK_PLACE_CPS = OldCps
+        end
+    end)
+end)
+
+-- Autoclicker Script
 run(function()
     local AutoClicker
     local CPS
@@ -1389,11 +1408,32 @@ run(function()
     })
     BlockCPS = AutoClicker:CreateTwoSlider({
         Name = 'Block CPS',
-        Min = math.huge,
+        Min = 1,
         Max = math.huge,  -- Set max to math.huge
         DefaultMin = math.huge,  -- Set default to math.huge
         DefaultMax = math.huge,  -- Set default to math.huge
         Darker = true
+    })
+end)
+
+-- NoClickDelay Feature
+run(function()
+    local old
+    
+    vape.Categories.Combat:CreateModule({
+        Name = 'NoClickDelay',
+        Function = function(callback)
+            if callback then
+                old = bedwars.SwordController.isClickingTooFast
+                bedwars.SwordController.isClickingTooFast = function(self)
+                    self.lastSwing = tick()
+                    return false
+                end
+            else
+                bedwars.SwordController.isClickingTooFast = old
+            end
+        end,
+        Tooltip = 'Remove the CPS cap'
     })
 end)
 
