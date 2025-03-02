@@ -1,5 +1,11 @@
 local token = "your-personal-access-token"
 
+// Ensure the syn library is loaded
+if not syn or not syn.request then
+    print("syn library is not available")
+    return
+end
+
 local url = "https://raw.githubusercontent.com/vapelite/no-more-skiding/main/loadstring"
 local headers = {
     ["Authorization"] = "token " .. token
