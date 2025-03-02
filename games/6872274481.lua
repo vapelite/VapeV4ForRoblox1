@@ -1296,17 +1296,13 @@ end)
 
 
 	
--- NoPlacementDelay Feature
-task.spawn(function()
-    local NoPlacementCps, DropDownButton, LayoutOrder, UIGradient = CreateToggle(BlatantTab, "NoPlacementCps", Settings.NoPlacementCps.Value, function(CallBack)
-        Settings.NoPlacementCps.Value = CallBack
-
 run(function()
     local AutoClicker
     local CPS
     local BlockCPS = {}
     local Thread
     local oldBlockPlace
+    local OldCps
 
     local function AutoClick()
         if Thread then
@@ -1342,6 +1338,10 @@ run(function()
                     return oldBlockPlace(self, ...)
                 end
 
+                -- Ensure NoPlacementCps is always true
+                OldCps = PlacementCPS.BLOCK_PLACE_CPS
+                PlacementCPS.BLOCK_PLACE_CPS = math.huge
+
                 AutoClicker:Clean(inputService.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         AutoClick()
@@ -1372,6 +1372,11 @@ run(function()
                     Thread = nil
                 end
                 bedwars.BlockPlacementController.placeBlock = oldBlockPlace
+
+                -- Restore the original CPS when the module is disabled
+                if OldCps then
+                    PlacementCPS.BLOCK_PLACE_CPS = OldCps
+                end
             end
         end,
         Tooltip = 'Hold attack button to automatically click'
