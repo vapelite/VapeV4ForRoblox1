@@ -1301,20 +1301,6 @@ task.spawn(function()
     local NoPlacementCps, DropDownButton, LayoutOrder, UIGradient = CreateToggle(BlatantTab, "NoPlacementCps", Settings.NoPlacementCps.Value, function(CallBack)
         Settings.NoPlacementCps.Value = CallBack
 
-        local OldCps = nil
-
-        if Settings.NoPlacementCps.Value == true then
-            OldCps = PlacementCPS.BLOCK_PLACE_CPS
-            PlacementCPS.BLOCK_PLACE_CPS = math.huge  -- Remove placement delay
-        end
-
-        if Settings.NoPlacementCps.Value == false then
-            PlacementCPS.BLOCK_PLACE_CPS = OldCps
-        end
-    end)
-end)
-
--- Autoclicker Script
 run(function()
     local AutoClicker
     local CPS
