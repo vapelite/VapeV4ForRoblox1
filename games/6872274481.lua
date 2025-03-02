@@ -8624,8 +8624,6 @@ end)
 
 
 run(function()
-    PlacementCPS.BLOCK_PLACE_CPS = math.huge  -- Disables game's block placement CPS limit
-
     local AutoClicker
     local CPS
     local BlockCPS = {}
@@ -8716,4 +8714,12 @@ run(function()
         DefaultMax = 12,
         Darker = true
     })
+    
+    -- No placement delay implementation
+    local oldUpdate = bedwars.BlockCpsController.onUpdate
+    bedwars.BlockCpsController.onUpdate = function(...)
+        local args = {...}
+        args[2] = math.huge
+        return oldUpdate(unpack(args))
+    end
 end)
