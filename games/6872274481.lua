@@ -3204,7 +3204,7 @@ run(function()
         ExtraText = function()
             return 'Heatseeker'
         end,
-        Tooltip = 'Increases your movement with various methods.'
+        Tooltip = 'Increases your movement with various methodss.'
     })
     Value = Speed:CreateSlider({
         Name = 'Speed',
