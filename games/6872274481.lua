@@ -3195,13 +3195,23 @@ run(function()
 						-- Get current velocity
 						local currentVelocity = root.AssemblyLinearVelocity
 						
-						-- Check if knockback is active (horizontal velocity is higher than expected)
-						local isKnockbackActive = currentVelocity.X > velo or currentVelocity.Z > velo
+						-- Knockback detection threshold
+						local knockbackThreshold = 1.5 -- Adjust if needed
+						
+						-- Check if knockback is active (horizontal or vertical velocity is too high)
+						local isKnockbackActive = (
+							math.abs(currentVelocity.X) > velo or
+							math.abs(currentVelocity.Z) > velo or
+							math.abs(currentVelocity.Y) > knockbackThreshold
+						)
 						
 						-- Apply movement only if knockback is not active
 						if not isKnockbackActive then
 							root.CFrame += destination
-							root.AssemblyLinearVelocity = (moveDirection * velo) + Vector3.new(0, currentVelocity.Y, 0)
+							root.AssemblyLinearVelocity = (moveDirection * velo) + Vector3.new(0, 0, 0) -- Cancels vertical velocity
+						else
+							-- Fully cancel knockback when detected
+							root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
 						end
 	
 						if AutoJump.Enabled and (state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed) and moveDirection ~= Vector3.zero and (Attacking or AlwaysJump.Enabled) then
@@ -3241,6 +3251,7 @@ run(function()
 		Darker = true
 	})
 end)
+
 	
 run(function()
 	local BedESP
