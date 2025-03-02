@@ -3175,7 +3175,6 @@ run(function()
 	
 			if callback then
 				Speed:Clean(runService.PreSimulation:Connect(function(dt)
-					bedwars.StatefulEntityKnockbackController.lastImpulseTime = callback and math.huge or time()
 					if entitylib.isAlive and not Fly.Enabled and not InfiniteFly.Enabled and not LongJump.Enabled and isnetworkowner(entitylib.character.RootPart) then
 						local state = entitylib.character.Humanoid:GetState()
 						if state == Enum.HumanoidStateType.Climbing then return end
@@ -3193,8 +3192,18 @@ run(function()
 							end
 						end
 	
-						root.CFrame += destination
-						root.AssemblyLinearVelocity = (moveDirection * velo) + Vector3.new(0, root.AssemblyLinearVelocity.Y, 0)
+						-- Get current velocity
+						local currentVelocity = root.AssemblyLinearVelocity
+						
+						-- Check if knockback is active (horizontal velocity is higher than expected)
+						local isKnockbackActive = currentVelocity.X > velo or currentVelocity.Z > velo
+						
+						-- Apply movement only if knockback is not active
+						if not isKnockbackActive then
+							root.CFrame += destination
+							root.AssemblyLinearVelocity = (moveDirection * velo) + Vector3.new(0, currentVelocity.Y, 0)
+						end
+	
 						if AutoJump.Enabled and (state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed) and moveDirection ~= Vector3.zero and (Attacking or AlwaysJump.Enabled) then
 							entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 						end
