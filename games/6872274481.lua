@@ -3179,42 +3179,27 @@ run(function()
 						local state = entitylib.character.Humanoid:GetState()
 						if state == Enum.HumanoidStateType.Climbing then return end
 	
-						local root, velo = entitylib.character.RootPart, getSpeed()
+						local root = entitylib.character.RootPart
+						local velo = getSpeed()
 						local moveDirection = AntiFallDirection or entitylib.character.Humanoid.MoveDirection
-						local destination = (moveDirection * math.max(Value.Value - velo, 0) * dt)
+						local destination = moveDirection * math.max(Value.Value - velo, 0) * dt
 	
 						if WallCheck.Enabled then
 							rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
 							rayCheck.CollisionGroup = root.CollisionGroup
 							local ray = workspace:Raycast(root.Position, destination, rayCheck)
 							if ray then
-								destination = ((ray.Position + ray.Normal) - root.Position)
+								destination = (ray.Position + ray.Normal) - root.Position
 							end
 						end
 	
-						-- Get current velocity
-						local currentVelocity = root.AssemblyLinearVelocity
-						
-						-- Knockback detection threshold
-						local knockbackThreshold = 1.5 -- Adjust if needed
-						
-						-- Check if knockback is active (horizontal or vertical velocity is too high)
-						local isKnockbackActive = (
-							math.abs(currentVelocity.X) > velo or
-							math.abs(currentVelocity.Z) > velo or
-							math.abs(currentVelocity.Y) > knockbackThreshold
-						)
-						
-						-- Apply movement only if knockback is not active
-						if not isKnockbackActive then
-							root.CFrame += destination
-							root.AssemblyLinearVelocity = (moveDirection * velo) + Vector3.new(0, 0, 0) -- Cancels vertical velocity
-						else
-							-- Fully cancel knockback when detected
-							root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-						end
+						-- Update the position without touching velocity;
+						-- this lets any knockback (horizontal and vertical) occur naturally.
+						root.CFrame += destination
 	
-						if AutoJump.Enabled and (state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed) and moveDirection ~= Vector3.zero and (Attacking or AlwaysJump.Enabled) then
+						if AutoJump.Enabled and 
+						   (state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed) and 
+						   moveDirection ~= Vector3.zero and (Attacking or AlwaysJump.Enabled) then
 							entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 						end
 					end
@@ -3226,6 +3211,7 @@ run(function()
 		end,
 		Tooltip = 'Increases your movement with various methods.'
 	})
+	
 	Value = Speed:CreateSlider({
 		Name = 'Speed',
 		Min = 1,
@@ -3235,16 +3221,19 @@ run(function()
 			return val == 1 and 'stud' or 'studs'
 		end
 	})
+	
 	WallCheck = Speed:CreateToggle({
 		Name = 'Wall Check',
 		Default = true
 	})
+	
 	AutoJump = Speed:CreateToggle({
 		Name = 'AutoJump',
 		Function = function(callback)
 			AlwaysJump.Object.Visible = callback
 		end
 	})
+	
 	AlwaysJump = Speed:CreateToggle({
 		Name = 'Always Jump',
 		Visible = false,
