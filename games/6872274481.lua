@@ -8716,10 +8716,6 @@ run(function()
 		Darker = true
 	})
 	
-	-- Add the no placement CPS option
-	PlacementCPS = {
-		BLOCK_PLACE_CPS = math.huge -- Set to math.huge to disable placement CPS limit
-	}
-end)
+
 
 
