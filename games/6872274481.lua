@@ -8679,24 +8679,20 @@ run(function()
 						local root = entitylib.character.RootPart
 						local velo = getSpeed()
 						local moveDirection = AntiFallDirection or entitylib.character.Humanoid.MoveDirection
-						
-						-- Preserve knockback and vertical physics
 						local currentVelocity = root.AssemblyLinearVelocity
 						
-						-- Only modify horizontal speed, let vertical movement be natural
-						local newVelocity = moveDirection * velo
+						-- Detect if knockback is happening by checking for high horizontal velocity
+						local knockbackActive = math.abs(currentVelocity.X) > velo * 1.5 or math.abs(currentVelocity.Z) > velo * 1.5
 						
-						-- Preserve knockback effect by not overriding X and Z velocity if already affected
-						if math.abs(currentVelocity.X) > 0.1 or math.abs(currentVelocity.Z) > 0.1 then
-							newVelocity = Vector3.new(0, newVelocity.Y, 0) -- Don't modify XZ if knockback is happening
+						-- Only apply speed boost if knockback is NOT happening
+						if not knockbackActive then
+							local newVelocity = moveDirection * velo
+							root.AssemblyLinearVelocity = Vector3.new(
+								math.clamp(currentVelocity.X + newVelocity.X, -Value.Value, Value.Value), 
+								currentVelocity.Y, -- Keep vertical movement unchanged
+								math.clamp(currentVelocity.Z + newVelocity.Z, -Value.Value, Value.Value)
+							)
 						end
-						
-						-- Apply velocity while keeping natural vertical movement
-						root.AssemblyLinearVelocity = Vector3.new(
-							math.clamp(currentVelocity.X + newVelocity.X, -Value.Value, Value.Value), 
-							currentVelocity.Y,  -- Keep vertical movement unchanged
-							math.clamp(currentVelocity.Z + newVelocity.Z, -Value.Value, Value.Value)
-						)
 
 						-- AutoJump handling
 						if AutoJump.Enabled and (state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed) and moveDirection ~= Vector3.zero and (Attacking or AlwaysJump.Enabled) then
