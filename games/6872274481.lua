@@ -8659,7 +8659,49 @@ run(function()
     local AlwaysJump
     local rayCheck = RaycastParams.new()
     rayCheck.RespectCanCollide = true
-    
+
+    -- Function to handle speed logic
+    local function applySpeed()
+        if entitylib.isAlive and not Fly.Enabled and not InfiniteFly.Enabled and not LongJump.Enabled and isnetworkowner(entitylib.character.RootPart) then
+            local state = entitylib.character.Humanoid:GetState()
+            if state == Enum.HumanoidStateType.Climbing then return end
+
+            local root = entitylib.character.RootPart
+            local moveDirection = AntiFallDirection or entitylib.character.Humanoid.MoveDirection
+            local destination = (moveDirection * math.max(Value.Value, 0) * runService.Heartbeat:Wait())
+
+            if WallCheck.Enabled then
+                rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
+                rayCheck.CollisionGroup = root.CollisionGroup
+                local ray = workspace:Raycast(root.Position, destination, rayCheck)
+                if ray then
+                    destination = ((ray.Position + ray.Normal) - root.Position)
+                end
+            end
+
+            -- Apply movement without overriding knockback
+            root.CFrame += destination
+
+            -- Preserve existing velocity (including knockback) and add movement speed
+            local currentVelocity = root.AssemblyLinearVelocity
+            local newVelocity = (moveDirection * Value.Value) + currentVelocity
+            root.AssemblyLinearVelocity = newVelocity
+
+            if AutoJump.Enabled and (state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed) and moveDirection ~= Vector3.zero and (Attacking or AlwaysJump.Enabled) then
+                entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end
+
+    -- Function to handle reconnection after death
+    local function handleDeath()
+        entitylib.characterAdded:Wait() -- Wait for the player to respawn
+        task.wait(1) -- Small delay to ensure the character is fully loaded
+        if Speed.Enabled then
+            applySpeed() -- Reapply speed after respawn
+        end
+    end
+
     Speed = vape.Categories.Blatant:CreateModule({
         Name = 'Speed',
         Function = function(callback)
@@ -8668,39 +8710,13 @@ run(function()
             pcall(function()
                 debug.setconstant(bedwars.WindWalkerController.updateSpeed, 7, callback and 'constantSpeedMultiplier' or 'moveSpeedMultiplier')
             end)
-    
+
             if callback then
-                Speed:Clean(runService.PreSimulation:Connect(function(dt)
-                    if entitylib.isAlive and not Fly.Enabled and not InfiniteFly.Enabled and not LongJump.Enabled and isnetworkowner(entitylib.character.RootPart) then
-                        local state = entitylib.character.Humanoid:GetState()
-                        if state == Enum.HumanoidStateType.Climbing then return end
-    
-                        local root = entitylib.character.RootPart
-                        local moveDirection = AntiFallDirection or entitylib.character.Humanoid.MoveDirection
-                        local destination = (moveDirection * math.max(Value.Value, 0) * dt
-    
-                        if WallCheck.Enabled then
-                            rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
-                            rayCheck.CollisionGroup = root.CollisionGroup
-                            local ray = workspace:Raycast(root.Position, destination, rayCheck)
-                            if ray then
-                                destination = ((ray.Position + ray.Normal) - root.Position)
-                            end
-                        end
-    
-                        -- Apply movement without overriding knockback
-                        root.CFrame += destination
-                        
-                        -- Preserve existing velocity (including knockback) and add movement speed
-                        local currentVelocity = root.AssemblyLinearVelocity
-                        local newVelocity = (moveDirection * Value.Value) + currentVelocity
-                        root.AssemblyLinearVelocity = newVelocity
-                        
-                        if AutoJump.Enabled and (state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed) and moveDirection ~= Vector3.zero and (Attacking or AlwaysJump.Enabled) then
-                            entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-                        end
-                    end
-                end))
+                -- Connect to PreSimulation to apply speed
+                Speed:Clean(runService.PreSimulation:Connect(applySpeed))
+
+                -- Connect to character death event to handle reconnection
+                Speed:Clean(entitylib.characterAdded:Connect(handleDeath))
             end
         end,
         ExtraText = function()
@@ -8708,6 +8724,7 @@ run(function()
         end,
         Tooltip = 'Increases your movement with various methods.'
     })
+
     Value = Speed:CreateSlider({
         Name = 'Speed',
         Min = 1,
@@ -8717,16 +8734,19 @@ run(function()
             return val == 1 and 'stud' or 'studs'
         end
     })
+
     WallCheck = Speed:CreateToggle({
         Name = 'Wall Check',
         Default = true
     })
+
     AutoJump = Speed:CreateToggle({
         Name = 'AutoJump',
         Function = function(callback)
             AlwaysJump.Object.Visible = callback
         end
     })
+
     AlwaysJump = Speed:CreateToggle({
         Name = 'Always Jump',
         Visible = false,
