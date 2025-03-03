@@ -3180,14 +3180,9 @@ run(function()
 						if state == Enum.HumanoidStateType.Climbing then return end
 	
 						local root = entitylib.character.RootPart
+						local velo = getSpeed()
 						local moveDirection = AntiFallDirection or entitylib.character.Humanoid.MoveDirection
-						
-						-- Ensure moveDirection is not zero before modifying it
-						if moveDirection.Magnitude > 0 then
-							moveDirection = moveDirection.Unit -- Normalize direction
-						end
-						
-						local destination = moveDirection * Value.Value * dt
+						local destination = moveDirection * math.max(Value.Value - velo, 0) * dt
 	
 						if WallCheck.Enabled then
 							rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
@@ -3198,11 +3193,10 @@ run(function()
 							end
 						end
 	
-						-- Preserve existing velocity for natural knockback
-						local currentVelocity = root.AssemblyLinearVelocity
+						-- Update the position without touching velocity;
+						-- this lets any knockback (horizontal and vertical) occur naturally.
 						root.CFrame += destination
-						root.AssemblyLinearVelocity = Vector3.new(currentVelocity.X, currentVelocity.Y, currentVelocity.Z)
-
+	
 						if AutoJump.Enabled and 
 						   (state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed) and 
 						   moveDirection ~= Vector3.zero and (Attacking or AlwaysJump.Enabled) then
@@ -3246,7 +3240,6 @@ run(function()
 		Darker = true
 	})
 end)
-
 
 	
 run(function()
