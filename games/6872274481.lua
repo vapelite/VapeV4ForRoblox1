@@ -8671,30 +8671,26 @@ run(function()
 	
 			if callback then
 				Speed:Clean(runService.PreSimulation:Connect(function(dt)
-					bedwars.StatefulEntityKnockbackController.lastImpulseTime = nil -- Allow knockback to function normally
+					bedwars.StatefulEntityKnockbackController.lastImpulseTime = callback and math.huge or time()
 					if entitylib.isAlive and not Fly.Enabled and not InfiniteFly.Enabled and not LongJump.Enabled and isnetworkowner(entitylib.character.RootPart) then
 						local state = entitylib.character.Humanoid:GetState()
 						if state == Enum.HumanoidStateType.Climbing then return end
 	
-						local root = entitylib.character.RootPart
-						local velo = getSpeed()
+						local root, velo = entitylib.character.RootPart, getSpeed()
 						local moveDirection = AntiFallDirection or entitylib.character.Humanoid.MoveDirection
-						local currentVelocity = root.AssemblyLinearVelocity
-						
-						-- Detect if knockback is happening by checking for high horizontal velocity
-						local knockbackActive = math.abs(currentVelocity.X) > velo * 1.5 or math.abs(currentVelocity.Z) > velo * 1.5
-						
-						-- Only apply speed boost if knockback is NOT happening
-						if not knockbackActive then
-							local newVelocity = moveDirection * velo
-							root.AssemblyLinearVelocity = Vector3.new(
-								math.clamp(currentVelocity.X + newVelocity.X, -Value.Value, Value.Value), 
-								currentVelocity.Y, -- Keep vertical movement unchanged
-								math.clamp(currentVelocity.Z + newVelocity.Z, -Value.Value, Value.Value)
-							)
+						local destination = (moveDirection * math.max(Value.Value - velo, 0) * dt)
+	
+						if WallCheck.Enabled then
+							rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
+							rayCheck.CollisionGroup = root.CollisionGroup
+							local ray = workspace:Raycast(root.Position, destination, rayCheck)
+							if ray then
+								destination = ((ray.Position + ray.Normal) - root.Position)
+							end
 						end
-
-						-- AutoJump handling
+	
+						root.CFrame += destination
+						root.AssemblyLinearVelocity = (moveDirection * velo) + Vector3.new(0, root.AssemblyLinearVelocity.Y, 0)
 						if AutoJump.Enabled and (state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed) and moveDirection ~= Vector3.zero and (Attacking or AlwaysJump.Enabled) then
 							entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 						end
@@ -8707,7 +8703,6 @@ run(function()
 		end,
 		Tooltip = 'Increases your movement with various methods.'
 	})
-	
 	Value = Speed:CreateSlider({
 		Name = 'Speed',
 		Min = 1,
@@ -8717,22 +8712,111 @@ run(function()
 			return val == 1 and 'stud' or 'studs'
 		end
 	})
-	
 	WallCheck = Speed:CreateToggle({
 		Name = 'Wall Check',
 		Default = true
 	})
-	
 	AutoJump = Speed:CreateToggle({
 		Name = 'AutoJump',
 		Function = function(callback)
 			AlwaysJump.Object.Visible = callback
 		end
 	})
-	
 	AlwaysJump = Speed:CreateToggle({
 		Name = 'Always Jump',
 		Visible = false,
+		Darker = true
+	})
+end)
+
+
+run(function()
+	local FastPlace
+	local CPS = math.huge
+	local BlockCPS = {}
+	local Thread
+
+	local function AutoClick()
+		if Thread then
+			task.cancel(Thread)
+		end
+
+		Thread = task.spawn(function()
+			repeat
+				if not bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then
+					local blockPlacer = bedwars.BlockPlacementController.blockPlacer
+					if store.hand.toolType == 'block' and blockPlacer then
+						local mouseinfo = blockPlacer.clientManager:getBlockSelector():getMouseInfo(0)
+						if mouseinfo and mouseinfo.placementPosition == mouseinfo.placementPosition then
+							task.spawn(blockPlacer.placeBlock, blockPlacer, mouseinfo.placementPosition)
+						end
+					elseif store.hand.toolType == 'sword' and bedwars.DaoController.chargingMaid == nil then
+						bedwars.SwordController:swingSwordAtMouse()
+					end
+				end
+			until not FastPlace.Enabled
+		end)
+	end
+
+	FastPlace = vape.Categories.Combat:CreateModule({
+		Name = 'Fast Place',
+		Function = function(callback)
+			if callback then
+				FastPlace:Clean(inputService.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						AutoClick()
+					end
+				end))
+
+				FastPlace:Clean(inputService.InputEnded:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 and Thread then
+						task.cancel(Thread)
+						Thread = nil
+					end
+				end))
+
+				if inputService.TouchEnabled then
+					pcall(function()
+						FastPlace:Clean(lplr.PlayerGui.MobileUI['2'].MouseButton1Down:Connect(AutoClick))
+						FastPlace:Clean(lplr.PlayerGui.MobileUI['2'].MouseButton1Up:Connect(function()
+							if Thread then
+								task.cancel(Thread)
+								Thread = nil
+							end
+						end))
+					end)
+				end
+			else
+				if Thread then
+					task.cancel(Thread)
+					Thread = nil
+				end
+			end
+		end,
+		Tooltip = 'Hold attack button to automatically click'
+	})
+	CPS = FastPlace:CreateTwoSlider({
+		Name = 'CPS',
+		Min = math.huge,
+		Max = math.huge,
+		DefaultMin = math.huge,
+		DefaultMax = math.huge
+	})
+	FastPlace:CreateToggle({
+		Name = 'Place Blocks',
+		Default = true,
+		Function = function(callback)
+			if BlockCPS.Object then
+				BlockCPS.Object.Visible = callback
+			end
+		end
+	})
+	BlockCPS = FastPlace:CreateTwoSlider({
+		Name = 'Block CPS',
+		Min = math.huge,
+		Max = math.huge,
+		DefaultMin = math.huge,
+		DefaultMax = math.huge,
 		Darker = true
 	})
 end)
