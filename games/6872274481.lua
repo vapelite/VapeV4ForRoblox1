@@ -8680,21 +8680,21 @@ run(function()
 						local velo = getSpeed()
 						local moveDirection = AntiFallDirection or entitylib.character.Humanoid.MoveDirection
 						
-						-- Allow knockback forces to apply naturally
+						-- Preserve knockback and vertical physics
 						local currentVelocity = root.AssemblyLinearVelocity
 						
-						-- Only modify speed without overriding horizontal physics (including knockback)
+						-- Only modify horizontal speed, let vertical movement be natural
 						local newVelocity = moveDirection * velo
 						
 						-- Preserve knockback effect by not overriding X and Z velocity if already affected
 						if math.abs(currentVelocity.X) > 0.1 or math.abs(currentVelocity.Z) > 0.1 then
-							newVelocity = Vector3.new(0, newVelocity.Y, 0) -- Only modify Y speed when knockback is happening
+							newVelocity = Vector3.new(0, newVelocity.Y, 0) -- Don't modify XZ if knockback is happening
 						end
 						
-						-- Apply modified velocity without fully overriding knockback
+						-- Apply velocity while keeping natural vertical movement
 						root.AssemblyLinearVelocity = Vector3.new(
 							math.clamp(currentVelocity.X + newVelocity.X, -Value.Value, Value.Value), 
-							newVelocity.Y, 
+							currentVelocity.Y,  -- Keep vertical movement unchanged
 							math.clamp(currentVelocity.Z + newVelocity.Z, -Value.Value, Value.Value)
 						)
 
