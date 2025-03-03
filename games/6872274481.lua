@@ -3180,12 +3180,11 @@ run(function()
 						if state == Enum.HumanoidStateType.Climbing then return end
 	
 						local root = entitylib.character.RootPart
-						local velo = getSpeed()
 						local moveDirection = AntiFallDirection or entitylib.character.Humanoid.MoveDirection
 						
-						-- **Fix: Instant Speed Change** (Prevents slowdown when pressing A/D)
+						-- Ensure moveDirection is not zero before modifying it
 						if moveDirection.Magnitude > 0 then
-							moveDirection = moveDirection.Unit -- Normalize to keep speed consistent
+							moveDirection = moveDirection.Unit -- Normalize direction
 						end
 						
 						local destination = moveDirection * Value.Value * dt
@@ -3199,9 +3198,11 @@ run(function()
 							end
 						end
 	
-						-- Update position without overriding velocity
+						-- Preserve existing velocity for natural knockback
+						local currentVelocity = root.AssemblyLinearVelocity
 						root.CFrame += destination
-	
+						root.AssemblyLinearVelocity = Vector3.new(currentVelocity.X, currentVelocity.Y, currentVelocity.Z)
+
 						if AutoJump.Enabled and 
 						   (state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed) and 
 						   moveDirection ~= Vector3.zero and (Attacking or AlwaysJump.Enabled) then
