@@ -8675,9 +8675,9 @@ run(function()
                         local state = entitylib.character.Humanoid:GetState()
                         if state == Enum.HumanoidStateType.Climbing then return end
     
-                        local root, velo = entitylib.character.RootPart, getSpeed()
+                        local root = entitylib.character.RootPart
                         local moveDirection = AntiFallDirection or entitylib.character.Humanoid.MoveDirection
-                        local destination = (moveDirection * math.max(Value.Value - velo, 0) * dt)
+                        local destination = (moveDirection * math.max(Value.Value, 0) * dt
     
                         if WallCheck.Enabled then
                             rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
@@ -8690,8 +8690,11 @@ run(function()
     
                         -- Apply movement without overriding knockback
                         root.CFrame += destination
+                        
                         -- Preserve existing velocity (including knockback) and add movement speed
-                        root.AssemblyLinearVelocity = (moveDirection * velo) + Vector3.new(root.AssemblyLinearVelocity.X, root.AssemblyLinearVelocity.Y, root.AssemblyLinearVelocity.Z)
+                        local currentVelocity = root.AssemblyLinearVelocity
+                        local newVelocity = (moveDirection * Value.Value) + currentVelocity
+                        root.AssemblyLinearVelocity = newVelocity
                         
                         if AutoJump.Enabled and (state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed) and moveDirection ~= Vector3.zero and (Attacking or AlwaysJump.Enabled) then
                             entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
