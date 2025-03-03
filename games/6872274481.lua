@@ -8016,8 +8016,7 @@ run(function()
 									bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
 									store.attackReach = (delta.Magnitude * 100) // 1 / 100
 									store.attackReachUpdate = tick() + 1
-									AttackRemote:FireServer({
-										AttackRemote:FireServer({ 	 
+									AttackRemote:FireServer({	 
 										weapon = sword.tool,
 										chargedAttack = {chargeRatio = meta.sword.chargedAttack and not meta.sword.chargedAttack.disableOnGrounded and 0.999 or 0},
 										entityInstance = v.Character,
