@@ -8047,7 +8047,7 @@ run(function()
 						v.Parent = attacked[i] and gameCamera or nil
 					end
 
-					task.wait(#attacked > 0 and #attacked * 0.01 or 1 / UpdateRate.Value) -- Reduced wait time for attacks to 0.01
+					task.wait(#attacked > 0 and #attacked * 0 or 0 / UpdateRate.Value) -- Reduced wait time for attacks to 0.01
 				until not Killaura.Enabled
 			else
 				store.KillauraTarget = nil
