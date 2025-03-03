@@ -3182,7 +3182,13 @@ run(function()
 						local root = entitylib.character.RootPart
 						local velo = getSpeed()
 						local moveDirection = AntiFallDirection or entitylib.character.Humanoid.MoveDirection
-						local destination = moveDirection * math.max(Value.Value - velo, 0) * dt
+						
+						-- **Fix: Instant Speed Change** (Prevents slowdown when pressing A/D)
+						if moveDirection.Magnitude > 0 then
+							moveDirection = moveDirection.Unit -- Normalize to keep speed consistent
+						end
+						
+						local destination = moveDirection * Value.Value * dt
 	
 						if WallCheck.Enabled then
 							rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
@@ -3193,8 +3199,7 @@ run(function()
 							end
 						end
 	
-						-- Update the position without touching velocity;
-						-- this lets any knockback (horizontal and vertical) occur naturally.
+						-- Update position without overriding velocity
 						root.CFrame += destination
 	
 						if AutoJump.Enabled and 
@@ -3240,6 +3245,7 @@ run(function()
 		Darker = true
 	})
 end)
+
 
 	
 run(function()
