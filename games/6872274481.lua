@@ -3156,88 +3156,77 @@ run(function()
 end)
 	
 run(function()
-	local Speed
-	local Value
-	local WallCheck
-	local AutoJump
-	local AlwaysJump
-	local rayCheck = RaycastParams.new()
-	rayCheck.RespectCanCollide = true
-	
-	Speed = vape.Categories.Blatant:CreateModule({
-		Name = 'Speed',
-		Function = function(callback)
-			frictionTable.Speed = callback or nil
-			updateVelocity()
-			pcall(function()
-				debug.setconstant(bedwars.WindWalkerController.updateSpeed, 7, callback and 'constantSpeedMultiplier' or 'moveSpeedMultiplier')
-			end)
-	
-			if callback then
-				Speed:Clean(runService.PreSimulation:Connect(function(dt)
-					if entitylib.isAlive and not Fly.Enabled and not InfiniteFly.Enabled and not LongJump.Enabled and isnetworkowner(entitylib.character.RootPart) then
-						local state = entitylib.character.Humanoid:GetState()
-						if state == Enum.HumanoidStateType.Climbing then return end
-	
-						local root = entitylib.character.RootPart
-						local moveDirection = AntiFallDirection or entitylib.character.Humanoid.MoveDirection
-						local currentVelocity = root.AssemblyLinearVelocity
-						
-						-- Ensure movement direction is normalized
-						if moveDirection.Magnitude > 0 then
-							moveDirection = moveDirection.Unit
-						end
-						
-						-- Apply movement without overriding knockback
-						local targetVelocity = moveDirection * Value.Value
-						root.AssemblyLinearVelocity = Vector3.new(
-							math.clamp(targetVelocity.X + currentVelocity.X, -Value.Value, Value.Value),
-							currentVelocity.Y, -- Keep vertical knockback
-							math.clamp(targetVelocity.Z + currentVelocity.Z, -Value.Value, Value.Value)
-						)
+    local Speed
+    local Value
+    local AutoJump
+    local AlwaysJump
 
-						if AutoJump.Enabled and 
-						   (state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed) and 
-						   moveDirection ~= Vector3.zero and (Attacking or AlwaysJump.Enabled) then
-							entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-						end
-					end
-				end))
-			end
-		end,
-		ExtraText = function()
-			return 'Heatseeker'
-		end,
-		Tooltip = 'Increases your movement with various methods.'
-	})
-	
-	Value = Speed:CreateSlider({
-		Name = 'Speed',
-		Min = 1,
-		Max = 23,
-		Default = 23,
-		Suffix = function(val)
-			return val == 1 and 'stud' or 'studs'
-		end
-	})
-	
-	WallCheck = Speed:CreateToggle({
-		Name = 'Wall Check',
-		Default = true
-	})
-	
-	AutoJump = Speed:CreateToggle({
-		Name = 'AutoJump',
-		Function = function(callback)
-			AlwaysJump.Object.Visible = callback
-		end
-	})
-	
-	AlwaysJump = Speed:CreateToggle({
-		Name = 'Always Jump',
-		Visible = false,
-		Darker = true
-	})
+    local function applySpeed()
+        Speed:Clean(runService.PreSimulation:Connect(function()
+            if entitylib.isAlive and isnetworkowner(entitylib.character.RootPart) then
+                local root = entitylib.character.RootPart
+                local humanoid = entitylib.character.Humanoid
+                local moveDirection = humanoid.MoveDirection
+
+                -- Apply speed boost
+                root.AssemblyLinearVelocity = Vector3.new(
+                    moveDirection.X * Value.Value,
+                    root.AssemblyLinearVelocity.Y, -- Keep vertical knockback
+                    moveDirection.Z * Value.Value
+                )
+
+                -- AutoJump
+                if AutoJump.Enabled and (humanoid:GetState() == Enum.HumanoidStateType.Running or humanoid:GetState() == Enum.HumanoidStateType.Landed) then
+                    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end
+        end))
+    end
+
+    Speed = vape.Categories.Blatant:CreateModule({
+        Name = 'Speed',
+        Function = function(callback)
+            if callback then
+                applySpeed()
+            else
+                Speed:Clean()
+            end
+        end,
+        ExtraText = function()
+            return 'Speed Boost'
+        end,
+        Tooltip = 'Increases your movement speed.'
+    })
+
+    Value = Speed:CreateSlider({
+        Name = 'Speed',
+        Min = 1,
+        Max = 23,
+        Default = 23,
+        Suffix = function(val)
+            return val == 1 and 'stud' or 'studs'
+        end
+    })
+
+    AutoJump = Speed:CreateToggle({
+        Name = 'AutoJump',
+        Function = function(callback)
+            AlwaysJump.Object.Visible = callback
+        end
+    })
+
+    AlwaysJump = Speed:CreateToggle({
+        Name = 'Always Jump',
+        Visible = false,
+        Darker = true
+    })
+
+    -- Reapply speed after respawning
+    entitylib.characterAdded.Event:Connect(function()
+        if Speed.Enabled then
+            applySpeed()
+        end
+    end)
 end)
 
 
