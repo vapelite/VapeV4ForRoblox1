@@ -7899,8 +7899,8 @@ run(function()
 		return sword, meta
 	end
 
-	Killaura = vape.Categories.Blatant:CreateModule({
-		Name = 'MackyHAHA',
+	Killaura = vape.Categories.Combat:CreateModule({
+		Name = 'Yikes',
 		Function = function(callback)
 			if callback then
 				if inputService.TouchEnabled then
@@ -8636,7 +8636,7 @@ run(function()
         Name = 'Block CPS',
         Min = 1,
         Max = 12,
-        DefaultMin = 12,
+        DefaultMin = 12,1
         DefaultMax = 12,
         Darker = true
     })
