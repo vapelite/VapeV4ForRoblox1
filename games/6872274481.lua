@@ -7899,8 +7899,8 @@ run(function()
 		return sword, meta
 	end
 
-	Killaura = vape.Categories.Combat:CreateModule({
-		Name = 'Yikes',
+	Killaura = vape.Categories.Blatant:CreateModule({
+		Name = 'Killaura',
 		Function = function(callback)
 			if callback then
 				if inputService.TouchEnabled then
