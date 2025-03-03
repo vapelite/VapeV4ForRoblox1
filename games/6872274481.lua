@@ -8671,30 +8671,34 @@ run(function()
 	
 			if callback then
 				Speed:Clean(runService.PreSimulation:Connect(function(dt)
-					bedwars.StatefulEntityKnockbackController.lastImpulseTime = callback and math.huge or time()
+					bedwars.StatefulEntityKnockbackController.lastImpulseTime = nil -- Allow knockback to function normally
 					if entitylib.isAlive and not Fly.Enabled and not InfiniteFly.Enabled and not LongJump.Enabled and isnetworkowner(entitylib.character.RootPart) then
 						local state = entitylib.character.Humanoid:GetState()
 						if state == Enum.HumanoidStateType.Climbing then return end
 	
-						local root, velo = entitylib.character.RootPart, getSpeed()
+						local root = entitylib.character.RootPart
+						local velo = getSpeed()
 						local moveDirection = AntiFallDirection or entitylib.character.Humanoid.MoveDirection
-						local destination = (moveDirection * math.max(Value.Value - velo, 0) * dt)
-	
-						if WallCheck.Enabled then
-							rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
-							rayCheck.CollisionGroup = root.CollisionGroup
-							local ray = workspace:Raycast(root.Position, destination, rayCheck)
-							if ray then
-								destination = ((ray.Position + ray.Normal) - root.Position)
-							end
-						end
-	
-						root.CFrame += destination
 						
-						-- Preserve knockback by adding the existing horizontal velocity
-						local knockbackVelocity = Vector3.new(root.AssemblyLinearVelocity.X, 0, root.AssemblyLinearVelocity.Z)
-						root.AssemblyLinearVelocity = (moveDirection * velo) + Vector3.new(0, root.AssemblyLinearVelocity.Y, 0) + knockbackVelocity
+						-- Allow knockback forces to apply naturally
+						local currentVelocity = root.AssemblyLinearVelocity
+						
+						-- Only modify speed without overriding horizontal physics (including knockback)
+						local newVelocity = moveDirection * velo
+						
+						-- Preserve knockback effect by not overriding X and Z velocity if already affected
+						if math.abs(currentVelocity.X) > 0.1 or math.abs(currentVelocity.Z) > 0.1 then
+							newVelocity = Vector3.new(0, newVelocity.Y, 0) -- Only modify Y speed when knockback is happening
+						end
+						
+						-- Apply modified velocity without fully overriding knockback
+						root.AssemblyLinearVelocity = Vector3.new(
+							math.clamp(currentVelocity.X + newVelocity.X, -Value.Value, Value.Value), 
+							newVelocity.Y, 
+							math.clamp(currentVelocity.Z + newVelocity.Z, -Value.Value, Value.Value)
+						)
 
+						-- AutoJump handling
 						if AutoJump.Enabled and (state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed) and moveDirection ~= Vector3.zero and (Attacking or AlwaysJump.Enabled) then
 							entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 						end
@@ -8707,6 +8711,7 @@ run(function()
 		end,
 		Tooltip = 'Increases your movement with various methods.'
 	})
+	
 	Value = Speed:CreateSlider({
 		Name = 'Speed',
 		Min = 1,
@@ -8716,16 +8721,19 @@ run(function()
 			return val == 1 and 'stud' or 'studs'
 		end
 	})
+	
 	WallCheck = Speed:CreateToggle({
 		Name = 'Wall Check',
 		Default = true
 	})
+	
 	AutoJump = Speed:CreateToggle({
 		Name = 'AutoJump',
 		Function = function(callback)
 			AlwaysJump.Object.Visible = callback
 		end
 	})
+	
 	AlwaysJump = Speed:CreateToggle({
 		Name = 'Always Jump',
 		Visible = false,
