@@ -4211,7 +4211,7 @@ run(function()
 	
 			repeat
 				local plr = entitylib.EntityPosition({
-					Range = 31,
+					Range = 28,
 					Part = 'RootPart',
 					Players = true,
 					Sort = sortmethods.Health
