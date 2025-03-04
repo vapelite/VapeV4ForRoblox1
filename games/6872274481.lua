@@ -8382,7 +8382,7 @@ run(function()
         for y = -3, 3, 3 do
             for z = -3, 3, 3 do
                 local vec = Vector3.new(x, y, z)
-                if (x == 0 or z == 0) and vec ~= Vector3.zero then
+                if vec ~= Vector3.zero then
                     table.insert(adjacent, vec)
                 end
             end
@@ -8485,9 +8485,6 @@ run(function()
                                 -- end
     
                                 local block, blockpos = getPlacedBlock(currentpos)
-if blockpos and math.abs(blockpos.X - currentpos.X) > 0 and math.abs(blockpos.Z - currentpos.Z) > 0 then
-    blockpos = nil -- Prevent diagonal placement
-end
                                 if not block then
                                     blockpos = checkAdjacent(blockpos * 3) and blockpos * 3 or blockProximity(currentpos)
                                     if blockpos then
