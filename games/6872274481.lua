@@ -8382,7 +8382,7 @@ run(function()
         for y = -3, 3, 3 do
             for z = -3, 3, 3 do
                 local vec = Vector3.new(x, y, z)
-                if vec ~= Vector3.zero then
+                if (x == 0 or z == 0) and vec ~= Vector3.zero then
                     table.insert(adjacent, vec)
                 end
             end
