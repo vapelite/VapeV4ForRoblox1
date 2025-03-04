@@ -8485,6 +8485,9 @@ run(function()
                                 -- end
     
                                 local block, blockpos = getPlacedBlock(currentpos)
+if blockpos and math.abs(blockpos.X - currentpos.X) > 0 and math.abs(blockpos.Z - currentpos.Z) > 0 then
+    blockpos = nil -- Prevent diagonal placement
+end
                                 if not block then
                                     blockpos = checkAdjacent(blockpos * 3) and blockpos * 3 or blockProximity(currentpos)
                                     if blockpos then
