@@ -4203,38 +4203,31 @@ run(function()
 			end, 20, false)
 		end,
 		summoner = function()
-	AutoKit:Clean(bedwars.Client:Get('SummonerClawAttackFromServer'):Connect(function(data)
-		if data.player == lplr then
-			bedwars.SummonerKitController:clawAttack(data.player, data.position, data.direction)
-		end
-	end))
-
-	repeat
-		if not lplr.Character or (lplr.Character:GetAttribute('Health') or 0) <= 0 then
-			break -- Stop attacking if the player is dead
-		end
-
-		local plr = entitylib.EntityPosition({
-			Range = 24,
-			Part = 'RootPart',
-			Players = true,
-			Sort = sortmethods.Health
-		})
-
-		if plr and (not Legit.Enabled or (lplr.Character:GetAttribute('Health') or 0) > 0) then
-			local localPosition = entitylib.character.RootPart.Position
-			local shootDir = CFrame.lookAt(localPosition, plr.RootPart.Position).LookVector
-			localPosition += shootDir * math.max((localPosition - plr.RootPart.Position).Magnitude - 16, 0)
-
-			bedwars.Client:Get(remotes.SummonerClawAttack):SendToServer({
-				position = localPosition,
-				direction = shootDir,
-				clientTime = workspace:GetServerTimeNow()
-			})
-		end
-	until false
-end
-
+			AutoKit:Clean(bedwars.Client:Get('SummonerClawAttackFromServer'):Connect(function(data)
+				if data.player == lplr then
+					bedwars.SummonerKitController:clawAttack(data.player, data.position, data.direction)
+				end
+			end))
+	
+			repeat
+				local plr = entitylib.EntityPosition({
+					Range = 24,
+					Part = 'RootPart',
+					Players = true,
+					Sort = sortmethods.Health
+				})
+	
+				if plr and (not Legit.Enabled or (lplr.Character:GetAttribute('Health') or 0) > 0) then
+					local localPosition = entitylib.character.RootPart.Position
+					local shootDir = CFrame.lookAt(localPosition, plr.RootPart.Position).LookVector
+					localPosition += shootDir * math.max((localPosition - plr.RootPart.Position).Magnitude - 16, 0)
+	
+					bedwars.Client:Get(remotes.SummonerClawAttack):SendToServer({
+						position = localPosition,
+						direction = shootDir,
+						clientTime = workspace:GetServerTimeNow()
+					})
+				end
 	
 				task.wait(0.1)
 			until not AutoKit.Enabled
