@@ -2241,7 +2241,7 @@ run(function()
 		end
 
 		if LegitAura.Enabled then
-			if (tick() - bedwars.SwordController.lastSwing) > 0.1 then return false end
+			if (tick() - bedwars.SwordController.lastSwing) > 0 then return false end
 		end
 
 		return sword, meta
