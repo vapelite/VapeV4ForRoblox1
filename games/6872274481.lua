@@ -4211,7 +4211,7 @@ run(function()
 	
 			repeat
 				local plr = entitylib.EntityPosition({
-					Range = 22,
+					Range = 32,
 					Part = 'RootPart',
 					Players = true,
 					Sort = sortmethods.Health
@@ -4220,7 +4220,7 @@ run(function()
 				if plr and (not Legit.Enabled or (lplr.Character:GetAttribute('Health') or 0) > 0) then
 					local localPosition = entitylib.character.RootPart.Position
 					local shootDir = CFrame.lookAt(localPosition, plr.RootPart.Position).LookVector
-					localPosition += shootDir * math.max((localPosition - plr.RootPart.Position).Magnitude - 16, 0)
+					localPosition += shootDir * math.max((localPosition - plr.RootPart.Position).Magnitude - 0, 0)
 	
 					bedwars.Client:Get(remotes.SummonerClawAttack):SendToServer({
 						position = localPosition,
