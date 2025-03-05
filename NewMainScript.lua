@@ -11,6 +11,7 @@ if accounts[playerName] then
     print("You are logged in as: " .. accounts[playerName])
 else
     print("This account is not recognized.")
+    return  -- Exit the script if the account is not recognized
 end
 
 -- Your existing code for file handling
