@@ -7850,24 +7850,28 @@ run(function()
 	local Killaura
 	local Targets
 	local Sort
-	local Range
+	local SwingRange
+	local AttackRange
 	local UpdateRate
 	local AngleSlider
 	local MaxTargets
 	local Mouse
 	local Swing
 	local GUI
-	local BoxColor
+	local BoxSwingColor
+	local BoxAttackColor
 	local ParticleTexture
 	local ParticleColor1
 	local ParticleColor2
 	local ParticleSize
+	local Face
 	local Animation
 	local AnimationMode
 	local AnimationSpeed
 	local AnimationTween
 	local Limit
 	local LegitAura
+	local Sync
 	local Particles, Boxes = {}, {}
 	local anims, AnimDelay, AnimTween, armC0 = vape.Libraries.auraanims, tick()
 	local AttackRemote = {FireServer = function() end}
@@ -7900,7 +7904,7 @@ run(function()
 	end
 
 	Killaura = vape.Categories.Blatant:CreateModule({
-		Name = 'MackyHAHA',
+		Name = 'Killaura',
 		Function = function(callback)
 			if callback then
 				if inputService.TouchEnabled then
@@ -7909,7 +7913,7 @@ run(function()
 					end)
 				end
 
-				if Animation.Enabled then
+				if Animation.Enabled and not (identifyexecutor and table.find({'Argon', 'Delta'}, ({identifyexecutor()})[1])) then
 					local fake = {
 						Controllers = {
 							ViewmodelController = {
@@ -7971,7 +7975,7 @@ run(function()
 					store.KillauraTarget = nil
 					if sword then
 						local plrs = entitylib.AllPosition({
-							Range = Range.Value,
+							Range = SwingRange.Value,
 							Wallcheck = Targets.Walls.Enabled or nil,
 							Part = 'RootPart',
 							Players = Targets.Players.Enabled,
@@ -7990,14 +7994,17 @@ run(function()
 								local angle = math.acos(localfacing:Dot((delta * Vector3.new(1, 0, 1)).Unit))
 								if angle > (math.rad(AngleSlider.Value) / 2) then continue end
 
-								table.insert(attacked, v)
+								table.insert(attacked, {
+									Entity = v,
+									Check = delta.Magnitude > AttackRange.Value and BoxSwingColor or BoxAttackColor
+								})
 								targetinfo.Targets[v] = tick() + 1
 
 								if not Attacking then
 									Attacking = true
 									store.KillauraTarget = v
 									if not Swing.Enabled and AnimDelay <= tick() and not LegitAura.Enabled then
-										AnimDelay = tick() + (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or 0)
+										AnimDelay = tick() + (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or (Sync.Enabled and 0.24 or 0.14))
 										bedwars.SwordController:playSwordEffect(meta, 0)
 										if meta.displayName:find(' Scythe') then
 											bedwars.ScytheController:playLocalAnimation()
@@ -8009,14 +8016,16 @@ run(function()
 									end
 								end
 
+								if delta.Magnitude > AttackRange.Value then continue end
+
 								local actualRoot = v.Character.PrimaryPart
 								if actualRoot then
 									local dir = CFrame.lookAt(selfpos, actualRoot.Position).LookVector
-									local pos = selfpos + dir * math.max(delta.Magnitude - 0, 0)
+									local pos = selfpos + dir * math.max(delta.Magnitude - 14.399, 0)
 									bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
 									store.attackReach = (delta.Magnitude * 100) // 1 / 100
-									store.attackReachUpdate = tick() + 0
-									AttackRemote:FireServer({	 
+									store.attackReachUpdate = tick() + 1
+									AttackRemote:FireServer({
 										weapon = sword.tool,
 										chargedAttack = {chargeRatio = meta.sword.chargedAttack and not meta.sword.chargedAttack.disableOnGrounded and 0.999 or 0},
 										entityInstance = v.Character,
@@ -8035,19 +8044,24 @@ run(function()
 					end
 
 					for i, v in Boxes do
-						v.Adornee = attacked[i] and attacked[i].RootPart or nil
+						v.Adornee = attacked[i] and attacked[i].Entity.RootPart or nil
 						if v.Adornee then
-							v.Color3 = Color3.fromHSV(BoxColor.Hue, BoxColor.Sat, BoxColor.Value)
-							v.Transparency = 1 - BoxColor.Opacity
+							v.Color3 = Color3.fromHSV(attacked[i].Check.Hue, attacked[i].Check.Sat, attacked[i].Check.Value)
+							v.Transparency = 1 - attacked[i].Check.Opacity
 						end
 					end
 
 					for i, v in Particles do
-						v.Position = attacked[i] and attacked[i].RootPart.Position or Vector3.new(9e9, 9e9, 9e9)
+						v.Position = attacked[i] and attacked[i].Entity.RootPart.Position or Vector3.new(9e9, 9e9, 9e9)
 						v.Parent = attacked[i] and gameCamera or nil
 					end
 
-					task.wait(#attacked > 0 and #attacked * 0 or 0 / UpdateRate.Value) -- Reduced wait time for attacks to 0.01
+					if Face.Enabled and attacked[1] then
+						local vec = attacked[1].Entity.RootPart.Position * Vector3.new(1, 0, 1)
+						entitylib.character.RootPart.CFrame = CFrame.lookAt(entitylib.character.RootPart.Position, Vector3.new(vec.X, entitylib.character.RootPart.Position.Y + 0.001, vec.Z))
+					end
+
+					task.wait(#attacked > 0 and #attacked * 0.02 or 1 / UpdateRate.Value)
 				until not Killaura.Enabled
 			else
 				store.KillauraTarget = nil
@@ -8085,7 +8099,16 @@ run(function()
 			table.insert(methods, i)
 		end
 	end
-	Range = Killaura:CreateSlider({
+	SwingRange = Killaura:CreateSlider({
+		Name = 'Swing range',
+		Min = 1,
+		Max = 18,
+		Default = 18,
+		Suffix = function(val)
+			return val == 1 and 'stud' or 'studs'
+		end
+	})
+	AttackRange = Killaura:CreateSlider({
 		Name = 'Attack range',
 		Min = 1,
 		Max = 18,
@@ -8123,7 +8146,8 @@ run(function()
 	Killaura:CreateToggle({
 		Name = 'Show target',
 		Function = function(callback)
-			BoxColor.Object.Visible = callback
+			BoxSwingColor.Object.Visible = callback
+			BoxAttackColor.Object.Visible = callback
 			if callback then
 				for i = 1, 10 do
 					local box = Instance.new('BoxHandleAdornment')
@@ -8143,7 +8167,14 @@ run(function()
 			end
 		end
 	})
-	BoxColor = Killaura:CreateColorSlider({
+	BoxSwingColor = Killaura:CreateColorSlider({
+		Name = 'Target Color',
+		Darker = true,
+		DefaultHue = 0.6,
+		DefaultOpacity = 0.5,
+		Visible = false
+	})
+	BoxAttackColor = Killaura:CreateColorSlider({
 		Name = 'Attack Color',
 		Darker = true,
 		DefaultOpacity = 0.5,
@@ -8242,6 +8273,7 @@ run(function()
 		Darker = true,
 		Visible = false
 	})
+	Face = Killaura:CreateToggle({Name = 'Face target'})
 	Animation = Killaura:CreateToggle({
 		Name = 'Custom Animation',
 		Function = function(callback)
@@ -8292,6 +8324,10 @@ run(function()
 	LegitAura = Killaura:CreateToggle({
 		Name = 'Swing only',
 		Tooltip = 'Only attacks while swinging manually'
+	})
+	Sync = Killaura:CreateToggle({
+		Name = 'Synced Animation',
+		Tooltip = 'Plays animation with hit attempt'
 	})
 end)
 	
