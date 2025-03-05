@@ -7356,7 +7356,7 @@ run(function()
 		Function = function(callback)
 			if callback then
 				repeat
-					label.Text = (store.attackReachUpdate > tick() and store.attackReach or '8')..' studs'
+					label.Text = (store.attackReachUpdate > tick() and store.attackReach or '12')..' studs'
 					task.wait(0.4)
 				until not ReachDisplay.Enabled
 			end
