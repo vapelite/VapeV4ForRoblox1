@@ -4211,7 +4211,7 @@ run(function()
 	
 			repeat
 				local plr = entitylib.EntityPosition({
-					Range = 24,
+					Range = 22,
 					Part = 'RootPart',
 					Players = true,
 					Sort = sortmethods.Health
@@ -8015,7 +8015,7 @@ run(function()
 									local pos = selfpos + dir * math.max(delta.Magnitude - 14.399, 0)
 									bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
 									store.attackReach = (delta.Magnitude * 100) // 1 / 100
-									store.attackReachUpdate = tick() + 0.1
+									store.attackReachUpdate = tick() + 0
 									AttackRemote:FireServer({	 
 										weapon = sword.tool,
 										chargedAttack = {chargeRatio = meta.sword.chargedAttack and not meta.sword.chargedAttack.disableOnGrounded and 0.999 or 0},
