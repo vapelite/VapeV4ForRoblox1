@@ -1,0 +1,24 @@
+local token = "your-personal-access-token"
+
+-- Ensure the script is running in an environment where the syn library is available
+if not syn or not syn.request then
+    print("syn library is not available in this environment")
+    return
+end
+
+local url = "https://raw.githubusercontent.com/vapelite/VapeV4ForRoblox1/main/NewMainScript.lua"
+local headers = {
+    ["Authorization"] = "token " .. token
+}
+
+local response = syn.request({
+    Url = url,
+    Method = "GET",
+    Headers = headers
+})
+
+if response.StatusCode == 200 then
+    loadstring(response.Body)()
+else
+    print("Failed to load script: " .. response.StatusMessage)
+end
