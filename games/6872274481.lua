@@ -782,7 +782,7 @@ run(function()
 
 					if Reach.Enabled or HitBoxes.Enabled then
 						attackTable.validate.raycast = attackTable.validate.raycast or {}
-						attackTable.validate.selfPosition.value += CFrame.lookAt(selfpos, targetpos).LookVector * math.max((selfpos - targetpos).Magnitude - 14.399, 0)
+						attackTable.validate.selfPosition.value += CFrame.lookAt(selfpos, targetpos).LookVector * math.max((selfpos - targetpos).Magnitude - 1, 0)
 					end
 
 					if suc and plr then
@@ -2352,7 +2352,7 @@ run(function()
 								local actualRoot = v.Character.PrimaryPart
 								if actualRoot then
 									local dir = CFrame.lookAt(selfpos, actualRoot.Position).LookVector
-									local pos = selfpos + dir * math.max(delta.Magnitude - 14.399, 0)
+									local pos = selfpos + dir * math.max(delta.Magnitude - 1.8, 0)
 									bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
 									store.attackReach = (delta.Magnitude * 100) // 1 / 100
 									store.attackReachUpdate = tick() + 1
@@ -2392,7 +2392,7 @@ run(function()
 						entitylib.character.RootPart.CFrame = CFrame.lookAt(entitylib.character.RootPart.Position, Vector3.new(vec.X, entitylib.character.RootPart.Position.Y + 0.001, vec.Z))
 					end
 
-					task.wait(#attacked > 0 and #attacked * 0.02 or 1 / UpdateRate.Value)
+					task.wait(#attacked > 0 and #attacked * 0 or 0 / UpdateRate.Value)
 				until not Killaura.Enabled
 			else
 				store.KillauraTarget = nil
@@ -8373,3 +8373,163 @@ run(function()
 	})
 end)
 	
+run(function()
+	local AutoBank
+	local ShopGuiCheck
+	local currency = {'iron', 'diamond', 'emerald', 'gold'}
+	local items = {}
+	local itemfolder = workspace:WaitForChild('ItemDrops')
+	
+	local function getShopNPC()
+		local shop = nil
+		if entitylib.isAlive then
+			local localPosition = entitylib.character.RootPart.Position
+			for _, v in store.shop do
+				if (v.RootPart.Position - localPosition).Magnitude <= 20 then
+					shop = v.Upgrades or v.Shop or nil
+				end
+			end
+		end
+		return shop
+	end
+	
+	AutoBank = vape.Categories.Utility:CreateModule({
+		Name = 'AutoBank',
+		Function = function(callback)
+			if callback then
+				AutoBank:Clean(itemfolder.ChildAdded:Connect(function(item)
+					if isnetworkowner(item) then
+						local bodyforce = item:WaitForChild('BodyForce')
+						bodyforce.Force = Vector3.new(0, item.AssemblyMass * workspace.Gravity, 0)
+						
+						item.CFrame = CFrame.new(0,10000,0)
+					end
+				end))
+				
+				repeat
+					local nearestshop = getShopNPC()
+					local localroot = entitylib.character.RootPart
+					
+					if nearestshop then
+						if ShopGuiCheck.Enabled then 
+							if not (bedwars.AppController:isAppOpen('BedwarsItemShopApp') or bedwars.AppController:isAppOpen('TeamUpgradeApp') or bedwars.AppController:isAppOpen('ChestApp')) then task.wait() continue end
+						end
+							
+						
+						for _,item in pairs(itemfolder:GetChildren()) do
+							if isnetworkowner(item) and entitylib.character.Humanoid.Health > 0 then 
+								task.spawn(function()
+									repeat 
+										task.wait(0.1)
+										item.CFrame = CFrame.new(localroot.Position - Vector3.new(0, 4, 0)) 
+									until not item
+								end)
+							end
+						end
+					else
+						for _, item in pairs(currency) do
+							item = getItem(item)
+							if item then
+								item = bedwars.Client:Get(remotes.DropItem):CallServer({
+									item = item.tool,
+									amount = item.amount
+								})
+							end
+						end
+					end
+					task.wait(0.05)
+				until not AutoBank.Enabled
+			else
+				local localroot = entitylib.character.RootPart
+				for _,item in pairs(itemfolder:GetChildren()) do
+					if isnetworkowner(item) and entitylib.character.Humanoid.Health > 0 then 
+						task.spawn(function()
+							repeat 
+								task.wait(0.1)
+								item.CFrame = CFrame.new(localroot.Position - Vector3.new(0, 4, 0)) 
+							until not item
+						end)
+					end
+				end
+			end
+		end,
+		Tooltip = ''
+	})
+	ShopGuiCheck = AutoBank:CreateToggle({
+		Name = 'Shop Gui Check',
+		Default = true
+	})
+end)
+
+run(function()
+    local AutoBlockIn
+    
+    function getStrongestBlock()
+        local strongestBlock,blockhp = nil, -math.huge
+        local blockSlot = nil
+
+        for i, item in pairs(store.inventory.inventory.items) do
+            local block = bedwars.ItemMeta[item.itemType] and bedwars.ItemMeta[item.itemType].block
+            if block and block.health > blockhp then
+                strongestBlock = item
+            end
+        end
+
+        return strongestBlock
+    end
+
+    local function hotbarSwitch(slot)
+        store.inventory.hotbarSlot = slot
+    end
+
+    AutoBlockIn = vape.Categories.World:CreateModule({
+        Name = 'AutoBlockIn',
+        Function = function(callback)
+            if callback then
+                if not entitylib.isAlive then return end
+
+                local character = entitylib.character
+                local rootPart = character.RootPart
+                local rootCFrame = rootPart.CFrame
+                local distance = 3
+
+                local directions = {
+                    rootCFrame.LookVector * distance + rootCFrame.UpVector * distance, 
+                    rootCFrame.UpVector * distance,
+                    rootCFrame.LookVector * -distance,
+                    rootCFrame.RightVector * -distance, 
+                    rootCFrame.RightVector * distance 
+                }
+
+                local function adjustPosition(pos)
+                    local yOffset = entitylib.character.HipHeight + (rootPart.Size.Y / 2) - 3
+                    return Vector3.new(
+                        math.round(pos.X / 3) * 3,
+                        math.round((pos.Y - yOffset) / 3) * 3,
+                        math.round(pos.Z / 3) * 3
+                    )
+                end
+
+                local strongestBlock = getStrongestBlock()
+                if strongestBlock then
+                    for _, direction in ipairs(directions) do
+                        local targetPos = rootCFrame.Position + direction
+                        local finalPos = adjustPosition(targetPos)
+                        
+                        local playerPos = rootPart.Position
+                        local isSamePosition = (finalPos - playerPos).Magnitude < 1
+                        
+                        if not getPlacedBlock(finalPos) and not (isSamePosition) then
+                            bedwars.placeBlock(finalPos, strongestBlock.itemType, false)
+                        end
+                    end
+                end
+
+                if AutoBlockIn.Enabled then
+                    AutoBlockIn:Toggle()
+                end
+            end
+        end,
+        Tooltip = 'Automatically places blocks in stable positions around the player, including above the front-facing direction.'
+    })
+end)	
